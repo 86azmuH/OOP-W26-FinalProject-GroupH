@@ -9,7 +9,7 @@ public class Booking {
     private String eventId;
     private LocalDateTime createdAt;
     private BookingStatus bookingStatus;
-
+//cheking iff nulls
     public Booking(String bookingId, String userId, String eventId, LocalDateTime createdAt, BookingStatus bookingStatus) {
         if (bookingId == null || bookingId.isBlank()) {
             throw new IllegalArgumentException("bookingId cannot be null/blank");
@@ -37,7 +37,7 @@ public class Booking {
     public String getBookingId() {
         return bookingId;
     }
-
+//methods of getters
     public String getUserId() {
         return userId;
     }

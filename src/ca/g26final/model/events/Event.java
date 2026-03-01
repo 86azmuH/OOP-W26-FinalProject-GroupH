@@ -12,32 +12,53 @@ public class Event {
     private EventStatus status;
 
     //Constructor
-    public Event(String eventID, String title, LocalDateTime dateTime, String location, int capacity)
-    {
-        //These return errors if entered blank
+    public Event(String eventID, String title, LocalDateTime dateTime, String location, int capacity) {
+
+        boolean valid = true;
+
         if (eventID == null || eventID.isBlank()) {
-            throw new IllegalArgumentException("eventId cannot be null/blank");
-        }
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("title cannot be null/blank");
-        }
-        if (dateTime == null) {
-            throw new IllegalArgumentException("dateTime cannot be null");
-        }
-        if (location == null || location.isBlank()) {
-            throw new IllegalArgumentException("location cannot be null/blank");
-        }
-        if (capacity <= 0) {
-            throw new IllegalArgumentException("capacity must be > 0");
+            System.out.println("[Event] Invalid eventID. Using 'INVALID'.");
+            this.eventID = "INVALID";
+            valid = false;
+        } else {
+            this.eventID = eventID;
         }
 
-        this.eventID = eventID;
-        this.title = title;
-        this.dateTime = dateTime;
-        this.location = location;
-        this.capacity = capacity;
-        this.status = EventStatus.ACTIVE;
+        if (title == null || title.isBlank()) {
+            System.out.println("[Event] Invalid title. Using 'Untitled Event'.");
+            this.title = "Untitled Event";
+            valid = false;
+        } else {
+            this.title = title;
+        }
+
+        if (dateTime == null) {
+            System.out.println("[Event] Invalid dateTime. Using now().");
+            this.dateTime = LocalDateTime.now();
+            valid = false;
+        } else {
+            this.dateTime = dateTime;
+        }
+
+        if (location == null || location.isBlank()) {
+            System.out.println("[Event] Invalid location. Using 'TBD'.");
+            this.location = "TBD";
+            valid = false;
+        } else {
+            this.location = location;
+        }
+
+        if (capacity <= 0) {
+            System.out.println("[Event] Invalid capacity. Using 1.");
+            this.capacity = 1;
+            valid = false;
+        } else {
+            this.capacity = capacity;
+        }
+
+        this.status = valid ? EventStatus.ACTIVE : EventStatus.CANCELLED;
     }
+
 
     // Getters
     public String getEventId() {

@@ -65,7 +65,6 @@ public class Event {
     }
 
     //Setters
-    // *** ADDED
     public void setTitle(String title) {
         if (title == null || title.isBlank()) {
             System.out.println("[Event] Title not updated");
@@ -74,7 +73,23 @@ public class Event {
         this.title = title;
     }
 
-    // *** ADDED
+    //setters for event service
+    public void setDateTime(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            System.out.println("[Event] dateTime not updated (null)");
+            return;
+        }
+        this.dateTime = dateTime;
+    }
+
+    public void setLocation(String location) {
+        if (location == null || location.isBlank()) {
+            System.out.println("[Event] Location not updated (invalid)");
+            return;
+        }
+        this.location = location;
+    }
+
     public void setCapacity(int capacity) {
         if (capacity <= 0) {
             System.out.println("[Event] Capacity not updated");

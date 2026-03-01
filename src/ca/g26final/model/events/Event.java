@@ -77,7 +77,7 @@ public class Event {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" +
-                "eventId='" + eventId + '\'' +
+                "eventId='" + eventID + '\'' +
                 ", title='" + title + '\'' +
                 ", dateTime=" + dateTime +
                 ", location='" + location + '\'' +

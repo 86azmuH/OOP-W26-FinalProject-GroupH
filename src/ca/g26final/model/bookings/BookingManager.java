@@ -17,42 +17,56 @@ public class BookingManager {
         nextBookingNumber = 1;
     }
 
+    //Generates a booking ID by incrementing a number
     private String generateBookingId() {
         String bookingId = "B" + nextBookingNumber;
         nextBookingNumber++;
         return bookingId;
     }
 
+    //Creates a new booking between a user and an event
     public Booking createBooking(User user, Event event) {
+
+        //makes sure that inputs are correct
         if (user == null) {
-            throw new IllegalArgumentException("user cannot be null");
+            throw new IllegalArgumentException("User cannot be null");
         }
         if (event == null) {
-            throw new IllegalArgumentException("event cannot be null");
-        }
-        if (event.getStatus() == EventStatus.CANCELLED) {
-            throw new IllegalArgumentException("cannot book a cancelled event");
+            throw new IllegalArgumentException("Event cannot be null");
         }
 
+        //makes sure that event is not already cancelled
+        if (event.getStatus() == EventStatus.CANCELLED) {
+            throw new IllegalArgumentException("Event is cancelled");
+        }
+
+        //prevents duplicate bookings
         for (Booking booking : bookings) {
             if (booking.getUserId().equals(user.getUserId())
                     && booking.getEventId().equals(event.getEventId())
                     && booking.isActive()) {
-                throw new IllegalArgumentException("user already has a booking for this event");
+                throw new IllegalArgumentException("User already booked this event");
             }
         }
 
+        //checks how many bookings a user has
         int confirmedBookingsForUser = countConfirmedBookingsForUser(user.getUserId());
+
+        //enforces booking limits based on the user type
         if (confirmedBookingsForUser >= user.getMaxConfirmedBookings()) {
-            throw new IllegalArgumentException("user has reached maximum confirmed bookings");
+            throw new IllegalArgumentException("User has reached maximum confirmed bookings");
         }
 
+
         BookingStatus status;
+        //if even has space, then confirm
         if (countConfirmedBookingsForEvent(event.getEventId()) < event.getCapacity()) {
             status = BookingStatus.CONFIRMED;
-        } else {
+        } //if not, waitlisted
+        else {
             status = BookingStatus.WAITLISTED;
         }
+
 
         Booking booking = new Booking(
                 generateBookingId(),
@@ -94,6 +108,7 @@ public class BookingManager {
             if (booking.getEventId().equals(eventId)
                     && booking.getBookingStatus() == BookingStatus.WAITLISTED) {
                 booking.setBookingStatus(BookingStatus.CONFIRMED);
+                System.out.println("Promoted from waitlist: " + booking.getBookingId());
                 return;
             }
         }

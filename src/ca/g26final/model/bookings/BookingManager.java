@@ -210,4 +210,24 @@ public class BookingManager {
     public ArrayList<Booking> getAllBookings() {
         return bookings;
     }
+
+    // Cancels all bookings for an event without promoting from waitlist. Used this when an event is cancelled.
+    public int cancelAllBookingsForEventNoPromotion(String eventId) {
+        if (eventId == null || eventId.isBlank()) {
+            System.out.println("[BookingManager] cancelAllBookingsForEvent_NoPromotion failed: eventId blank");
+            return 0;
+        }
+
+        int changed = 0;
+
+        for (Booking booking : bookings) {
+            if (booking.getEventId().equals(eventId)
+                    && booking.getBookingStatus() != BookingStatus.CANCELLED) {
+                booking.setBookingStatus(BookingStatus.CANCELLED);
+                changed++;
+            }
+        }
+
+        return changed;
+    }
 }

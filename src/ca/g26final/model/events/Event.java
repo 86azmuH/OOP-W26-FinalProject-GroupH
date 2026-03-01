@@ -73,7 +73,7 @@ public class Event {
         return this.status == EventStatus.ACTIVE;
     }
 
-    //Safety Measure
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" +

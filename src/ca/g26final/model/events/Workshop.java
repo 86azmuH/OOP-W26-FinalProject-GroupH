@@ -19,7 +19,7 @@ public class Workshop extends Event{
         return topic;
     }
 
-    //Safety Measure
+
     @Override
     public String toString() {
         return super.toString().replace("}", "") + ", topic='" + topic + "'}";

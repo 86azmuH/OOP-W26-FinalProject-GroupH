@@ -2,20 +2,21 @@ package ca.g26final.model.events;
 import java.time.LocalDateTime;
 
 public class Concert extends Event{
-    private final int ageRestriction; // display only in Phase 1
+    private final String ageRestriction; // display only in Phase 1
 
-    public Concert(String eventId, String title, LocalDateTime dateTime, String location, int capacity, int ageRestriction) {
-        super(eventId, title, dateTime, location, capacity);
+    public Concert(String eventID, String title, LocalDateTime dateTime, String location, int capacity, String ageRestriction) {
+        super(eventID, title, dateTime, location, capacity);
 
-        //Validation: doesn't allow negative ages
-        if (ageRestriction < 0) {
-            throw new IllegalArgumentException("ageRestriction cannot be negative");
+        if (ageRestriction == null || ageRestriction.isBlank()) {
+            System.out.println("[Concert] Invalid ageRestriction. Using 'N/A'.");
+            this.ageRestriction = "N/A";
+        } else {
+            this.ageRestriction = ageRestriction;
         }
-        this.ageRestriction = ageRestriction;
     }
 
     //Getter
-    public int getAgeRestriction() {
+    public String getAgeRestriction() {
         return ageRestriction;
     }
 

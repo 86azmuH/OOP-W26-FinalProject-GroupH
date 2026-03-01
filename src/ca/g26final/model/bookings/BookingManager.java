@@ -9,7 +9,10 @@ import java.util.ArrayList;
 
 public class BookingManager {
 
+    // Stores all bookings in the system (w status such as confirmed, waitlisted or cancelled)
     private ArrayList<Booking> bookings;
+
+    //counter to generate booking IDs
     private int nextBookingNumber;
 
     public BookingManager() {
@@ -29,32 +32,33 @@ public class BookingManager {
 
         //makes sure that inputs are correct
         if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
+            System.out.println("[BookingManager] createBooking failed: user is null");
+            return null;
         }
         if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null");
+            System.out.println("[BookingManager] createBooking failed: event is null");
+            return null;
         }
-
-        //makes sure that event is not already cancelled
         if (event.getStatus() == EventStatus.CANCELLED) {
-            throw new IllegalArgumentException("Event is cancelled");
+            System.out.println("[BookingManager] createBooking failed: event is cancelled");
+            return null;
         }
 
         //prevents duplicate bookings
-        for (Booking booking : bookings) {
-            if (booking.getUserId().equals(user.getUserId())
-                    && booking.getEventId().equals(event.getEventId())
-                    && booking.isActive()) {
-                throw new IllegalArgumentException("User already booked this event");
+        for (Booking b : bookings) {
+            if (b.getUserId().equals(user.getUserId())
+                    && b.getEventId().equals(event.getEventId())
+                    && b.isActive()) {
+                System.out.println("[BookingManager] createBooking failed: duplicate active booking (user already booked this event)");
+                return null;
             }
         }
 
-        //checks how many bookings a user has
-        int confirmedBookingsForUser = countConfirmedBookingsForUser(user.getUserId());
-
-        //enforces booking limits based on the user type
-        if (confirmedBookingsForUser >= user.getMaxConfirmedBookings()) {
-            throw new IllegalArgumentException("User has reached maximum confirmed bookings");
+        //The confirmed booking limit depends on the user type (Student/Staff/Guest)
+        int confirmedForUser = countConfirmedBookingsForUser(user.getUserId());
+        if (confirmedForUser >= user.getMaxConfirmedBookings()) {
+            System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
+            return null;
         }
 
 
@@ -80,12 +84,21 @@ public class BookingManager {
         return booking;
     }
 
-    public void cancelBooking(String bookingId) {
+    //Cancels booking
+    public boolean  cancelBooking(String bookingId) {
+
+        //BOoking failure safeguard
+        if (bookingId == null || bookingId.isBlank()) {
+            System.out.println("[BookingManager] cancelBooking failed: bookingId blank");
+            return false;
+        }
+
+        //
         for (Booking booking : bookings) {
             if (booking.getBookingId().equals(bookingId)) {
 
                 if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
-                    return;
+                    return true;
                 }
 
                 boolean wasConfirmed = booking.getBookingStatus() == BookingStatus.CONFIRMED;
@@ -96,13 +109,14 @@ public class BookingManager {
                 if (wasConfirmed) {
                     promoteFirstWaitlistedBooking(eventId);
                 }
-                return;
+                return true;
             }
         }
 
-        throw new IllegalArgumentException("booking not found");
+        return true;
     }
 
+    //
     private void promoteFirstWaitlistedBooking(String eventId) {
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
@@ -116,6 +130,9 @@ public class BookingManager {
 
     public ArrayList<Booking> getBookingsForUser(String userId) {
         ArrayList<Booking> result = new ArrayList<>();
+
+
+        if (userId == null || userId.isBlank()) return result;
 
         for (Booking booking : bookings) {
             if (booking.getUserId().equals(userId)) {

@@ -54,14 +54,18 @@ public class Booking {
         return bookingStatus;
     }
 
-    public void setBookingStatus(BookingStatus bookingStatus) {
-        this.bookingStatus = bookingStatus;
-    }
-
     public boolean isActive() {
         return bookingStatus == BookingStatus.CONFIRMED || bookingStatus == BookingStatus.WAITLISTED;
     }
 
+    //setters
+    public void setBookingStatus(BookingStatus bookingStatus) {
+        if (bookingStatus == null) {
+            System.out.println("[Booking] Status not updated");
+            return;
+        }
+        this.bookingStatus = bookingStatus;
+    }
     @Override
     public String toString() {
         return "Booking{" +

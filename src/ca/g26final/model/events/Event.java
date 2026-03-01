@@ -64,6 +64,25 @@ public class Event {
         return status;
     }
 
+    //Setters
+    // *** ADDED
+    public void setTitle(String title) {
+        if (title == null || title.isBlank()) {
+            System.out.println("[Event] Title not updated");
+            return;
+        }
+        this.title = title;
+    }
+
+    // *** ADDED
+    public void setCapacity(int capacity) {
+        if (capacity <= 0) {
+            System.out.println("[Event] Capacity not updated");
+            return;
+        }
+        this.capacity = capacity;
+    }
+
     //Status
     public void cancel() {
         this.status = EventStatus.CANCELLED;

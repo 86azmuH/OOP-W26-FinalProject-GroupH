@@ -2,7 +2,6 @@ package ca.g26final.service;
 
 import ca.g26final.model.bookings.Booking;
 import ca.g26final.model.bookings.BookingManager;
-import ca.g26final.model.bookings.BookingStatus;
 import ca.g26final.model.events.Event;
 import ca.g26final.model.users.User;
 
@@ -14,7 +13,7 @@ public class BookingService {
     private EventService eventService;
     private BookingManager bookingManager;
 
-    //constructor for booking service
+    // constructor for booking service
     public BookingService(UserService userService, EventService eventService) {
         this.userService = userService;
         this.eventService = eventService;
@@ -50,7 +49,8 @@ public class BookingService {
         return bookingManager.createBooking(user, event);
     }
 
-    // Cancels a booking with a bookingId. Returns true if cancelled or already cancelled, false otherwise.
+    // Cancels a booking with a bookingId. Returns true if cancelled or already
+    // cancelled, false otherwise.
     public boolean cancelBooking(String bookingId) {
         return bookingManager.cancelBooking(bookingId);
     }
@@ -103,6 +103,11 @@ public class BookingService {
     // Cancel a waitlisted booking as well (same cancelBooking)
     public boolean cancelWaitlistedBooking(String bookingId) {
         return cancelBooking(bookingId);
+    }
+
+    // expose all bookings for UI purposes
+    public ArrayList<Booking> getAllBookings() {
+        return bookingManager.getAllBookings();
     }
 
 }

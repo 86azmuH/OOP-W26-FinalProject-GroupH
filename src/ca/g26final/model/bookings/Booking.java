@@ -9,35 +9,60 @@ public class Booking {
     private String eventId;
     private LocalDateTime createdAt;
     private BookingStatus bookingStatus;
-//cheking iff nulls
+
     public Booking(String bookingId, String userId, String eventId, LocalDateTime createdAt, BookingStatus bookingStatus) {
+
+        boolean valid = true;
+
         if (bookingId == null || bookingId.isBlank()) {
-            throw new IllegalArgumentException("bookingId cannot be null/blank");
-        }
-        if (userId == null || userId.isBlank()) {
-            throw new IllegalArgumentException("userId cannot be null/blank");
-        }
-        if (eventId == null || eventId.isBlank()) {
-            throw new IllegalArgumentException("eventId cannot be null/blank");
-        }
-        if (createdAt == null) {
-            throw new IllegalArgumentException("createdAt cannot be null");
-        }
-        if (bookingStatus == null) {
-            throw new IllegalArgumentException("bookingStatus cannot be null");
+            System.out.println("[Booking] Invalid bookingId. Using 'INVALID'.");
+            this.bookingId = "INVALID";
+            valid = false;
+        } else {
+            this.bookingId = bookingId;
         }
 
-        this.bookingId = bookingId;
-        this.userId = userId;
-        this.eventId = eventId;
-        this.createdAt = createdAt;
-        this.bookingStatus = bookingStatus;
+        if (userId == null || userId.isBlank()) {
+            System.out.println("[Booking] Invalid userId. Using 'UNKNOWN_USER'.");
+            this.userId = "UNKNOWN_USER";
+            valid = false;
+        } else {
+            this.userId = userId;
+        }
+
+        if (eventId == null || eventId.isBlank()) {
+            System.out.println("[Booking] Invalid eventId. Using 'UNKNOWN_EVENT'.");
+            this.eventId = "UNKNOWN_EVENT";
+            valid = false;
+        } else {
+            this.eventId = eventId;
+        }
+
+        if (createdAt == null) {
+            System.out.println("[Booking] Invalid createdAt. Using now().");
+            this.createdAt = LocalDateTime.now();
+            valid = false;
+        } else {
+            this.createdAt = createdAt;
+        }
+
+        if (bookingStatus == null) {
+            System.out.println("[Booking] Invalid bookingStatus. Using CANCELLED.");
+            this.bookingStatus = BookingStatus.CANCELLED;
+            valid = false;
+        } else {
+            this.bookingStatus = bookingStatus;
+        }
+
+        if (!valid && this.bookingStatus != BookingStatus.CANCELLED) {
+            this.bookingStatus = BookingStatus.CANCELLED;
+        }
     }
 
     public String getBookingId() {
         return bookingId;
     }
-//methods of getters
+
     public String getUserId() {
         return userId;
     }
@@ -58,7 +83,6 @@ public class Booking {
         return bookingStatus == BookingStatus.CONFIRMED || bookingStatus == BookingStatus.WAITLISTED;
     }
 
-    //setters
     public void setBookingStatus(BookingStatus bookingStatus) {
         if (bookingStatus == null) {
             System.out.println("[Booking] Status not updated");
@@ -66,6 +90,7 @@ public class Booking {
         }
         this.bookingStatus = bookingStatus;
     }
+
     @Override
     public String toString() {
         return "Booking{" +

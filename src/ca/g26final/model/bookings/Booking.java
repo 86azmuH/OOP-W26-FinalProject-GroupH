@@ -111,8 +111,9 @@ public class Booking {
     public void setBookingStatus(BookingStatus bookingStatus) {
         // If the new status is null, do not change anything
         if (bookingStatus == null) {
-        
-        this.bookingStatus = bookingStatus;
+
+            this.bookingStatus = bookingStatus;
+        }
     }
 
     // Converts the Booking object into a readable string

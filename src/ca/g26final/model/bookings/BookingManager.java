@@ -3,48 +3,55 @@ package ca.g26final.model.bookings;
 import ca.g26final.model.events.Event;
 import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
-//1c enterprise
+// 1c enterprise
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class BookingManager {
 
-    // Stores all bookings in the system (w status such as confirmed, waitlisted or cancelled)
+    // Stores all bookings in the system
+    // A booking can be confirmed, waitlisted, or cancelled
     private ArrayList<Booking> bookings;
 
-    //counter to generate booking IDs
+    // Keeps track of the next booking number for making booking IDs
     private int nextBookingNumber;
 
+    // Constructor: starts with an empty booking list
+    // and sets the first booking number to 1
     public BookingManager() {
         bookings = new ArrayList<>();
         nextBookingNumber = 1;
     }
 
-    //Generates a booking ID by incrementing a number
+    // Creates a new booking ID like B1, B2, B3...
     private String generateBookingId() {
         String bookingId = "B" + nextBookingNumber;
         nextBookingNumber++;
         return bookingId;
     }
 
-    //Creates a new booking between a user and an event
+    // Creates a new booking for a user and an event
     public Booking createBooking(User user, Event event) {
 
-        //makes sure that inputs are correct
+        // Check if the user is missing
         if (user == null) {
             System.out.println("[BookingManager] createBooking failed: user is null");
             return null;
         }
+
+        // Check if the event is missing
         if (event == null) {
             System.out.println("[BookingManager] createBooking failed: event is null");
             return null;
         }
+
+        // Do not allow booking if the event is cancelled
         if (event.getStatus() == EventStatus.CANCELLED) {
             System.out.println("[BookingManager] createBooking failed: event is cancelled");
             return null;
         }
 
-        //prevents duplicate bookings
+        // Stop the same user from making the same active booking twice
         for (Booking b : bookings) {
             if (b.getUserId().equals(user.getUserId())
                     && b.getEventId().equals(event.getEventId())
@@ -54,24 +61,27 @@ public class BookingManager {
             }
         }
 
-        //The confirmed booking limit depends on the user type (Student/Staff/Guest)
+        // Count how many confirmed bookings this user already has
         int confirmedForUser = countConfirmedBookingsForUser(user.getUserId());
+
+        // If the user reached their limit, do not allow another confirmed booking
         if (confirmedForUser >= user.getMaxConfirmedBookings()) {
             System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
             return null;
         }
 
-
         BookingStatus status;
-        //if even has space, then confirm
+
+        // If the event still has space, the booking is confirmed
         if (countConfirmedBookingsForEvent(event.getEventId()) < event.getCapacity()) {
             status = BookingStatus.CONFIRMED;
-        } //if not, waitlisted
+        }
+        // If the event is full, the booking goes on the waitlist
         else {
             status = BookingStatus.WAITLISTED;
         }
 
-
+        // Create the new booking object
         Booking booking = new Booking(
                 generateBookingId(),
                 user.getUserId(),
@@ -80,32 +90,40 @@ public class BookingManager {
                 status
         );
 
+        // Add the new booking to the list
         bookings.add(booking);
+
+        // Return the booking that was created
         return booking;
     }
 
-    //Cancels booking
-    public boolean  cancelBooking(String bookingId) {
+    // Cancels a booking using its booking ID
+    public boolean cancelBooking(String bookingId) {
 
-        //BOoking failure safeguard
+        // Check if the booking ID is missing or blank
         if (bookingId == null || bookingId.isBlank()) {
             System.out.println("[BookingManager] cancelBooking failed: bookingId blank");
             return false;
         }
 
-        //loops through bookings to find the booking via the booking id and ensures its cancelled
+        // Look through all bookings to find the matching booking
         for (Booking booking : bookings) {
             if (booking.getBookingId().equals(bookingId)) {
 
+                // If it is already cancelled, nothing else needs to be done
                 if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
                     return true;
                 }
 
+                // Remember if this booking was confirmed before cancelling it
                 boolean wasConfirmed = booking.getBookingStatus() == BookingStatus.CONFIRMED;
                 String eventId = booking.getEventId();
 
+                // Change the booking status to cancelled
                 booking.setBookingStatus(BookingStatus.CANCELLED);
 
+                // If a confirmed booking was cancelled,
+                // move the first waitlisted person into confirmed
                 if (wasConfirmed) {
                     promoteFirstWaitlistedBooking(eventId);
                 }
@@ -113,10 +131,12 @@ public class BookingManager {
             }
         }
 
+        // This currently returns true even if the booking was not found
         return true;
     }
 
-    //promotes the first waitlisted booking for an event to confirmed
+    // Finds the first waitlisted booking for an event
+    // and changes it to confirmed
     private void promoteFirstWaitlistedBooking(String eventId) {
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
@@ -128,13 +148,14 @@ public class BookingManager {
         }
     }
 
-    //returns bookings for user
+    // Returns all bookings made by one user
     public ArrayList<Booking> getBookingsForUser(String userId) {
         ArrayList<Booking> result = new ArrayList<>();
 
-
+        // If userId is invalid, return an empty list
         if (userId == null || userId.isBlank()) return result;
 
+        // Add all bookings that belong to this user
         for (Booking booking : bookings) {
             if (booking.getUserId().equals(userId)) {
                 result.add(booking);
@@ -144,10 +165,11 @@ public class BookingManager {
         return result;
     }
 
-    //returns bookings for event
+    // Returns all bookings for one event
     public ArrayList<Booking> getBookingsForEvent(String eventId) {
         ArrayList<Booking> result = new ArrayList<>();
 
+        // Add all bookings that belong to this event
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)) {
                 result.add(booking);
@@ -157,10 +179,11 @@ public class BookingManager {
         return result;
     }
 
-    //returns confirmed bookings for event
+    // Returns only confirmed bookings for one event
     public ArrayList<Booking> getConfirmedBookingsForEvent(String eventId) {
         ArrayList<Booking> result = new ArrayList<>();
 
+        // Add only confirmed bookings for this event
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
                     && booking.getBookingStatus() == BookingStatus.CONFIRMED) {
@@ -171,10 +194,11 @@ public class BookingManager {
         return result;
     }
 
-    //returns waitlisted bookings for event
+    // Returns only waitlisted bookings for one event
     public ArrayList<Booking> getWaitlistedBookingsForEvent(String eventId) {
         ArrayList<Booking> result = new ArrayList<>();
 
+        // Add only waitlisted bookings for this event
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
                     && booking.getBookingStatus() == BookingStatus.WAITLISTED) {
@@ -185,10 +209,11 @@ public class BookingManager {
         return result;
     }
 
-    //returns confirmed bookings for event
+    // Counts how many confirmed bookings an event has
     public int countConfirmedBookingsForEvent(String eventId) {
         int count = 0;
 
+        // Go through all bookings and count confirmed ones for this event
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
                     && booking.getBookingStatus() == BookingStatus.CONFIRMED) {
@@ -199,10 +224,11 @@ public class BookingManager {
         return count;
     }
 
-    //returtns confirmed bookings for user
+    // Counts how many confirmed bookings a user has
     public int countConfirmedBookingsForUser(String userId) {
         int count = 0;
 
+        // Go through all bookings and count confirmed ones for this user
         for (Booking booking : bookings) {
             if (booking.getUserId().equals(userId)
                     && booking.getBookingStatus() == BookingStatus.CONFIRMED) {
@@ -213,13 +239,14 @@ public class BookingManager {
         return count;
     }
 
-    //returns all bookings
+    // Returns the full list of all bookings
     public ArrayList<Booking> getAllBookings() {
         return bookings;
     }
 
-    // Cancels all bookings for an event without promoting from waitlist. Used this when an event is cancelled.
-    //later on changed can be used as feedback on the gui for the user to see how many bookins were changed
+    // Cancels every booking for one event
+    // This is useful if the event itself gets cancelled
+    // It does not promote anyone from the waitlist
     public int cancelAllBookingsForEventNoPromotion(String eventId) {
         if (eventId == null || eventId.isBlank()) {
             System.out.println("[BookingManager] cancelAllBookingsForEvent_NoPromotion failed: eventId blank");
@@ -228,6 +255,8 @@ public class BookingManager {
 
         int changed = 0;
 
+        // Go through all bookings for this event
+        // and cancel any booking that is not already cancelled
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
                     && booking.getBookingStatus() != BookingStatus.CANCELLED) {
@@ -236,6 +265,7 @@ public class BookingManager {
             }
         }
 
+        // Return how many bookings were changed
         return changed;
     }
 }

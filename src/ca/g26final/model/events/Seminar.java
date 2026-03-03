@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 public class Seminar extends Event{
     private final String speakerName;
 
+    //Constructor
     public Seminar(String eventID, String title, LocalDateTime dateTime, String location, int capacity, String speakerName) {
+        //Calls Super Class Constructor
         super(eventID, title, dateTime, location, capacity);
 
+        //Checks if blank
         if (speakerName == null || speakerName.isBlank()) {
             System.out.println("[Seminar] Invalid speakerName. Using 'Unknown Speaker'.");
             this.speakerName = "Unknown Speaker";
@@ -15,6 +18,7 @@ public class Seminar extends Event{
         }
     }
 
+    //returns Slideshow
     public String getSpeakerName() {
         return speakerName;
     }

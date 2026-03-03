@@ -4,9 +4,11 @@ import java.time.LocalDateTime;
 public class Concert extends Event{
     private final String ageRestriction; // display only in Phase 1
 
+    //Constructor for Concert
     public Concert(String eventID, String title, LocalDateTime dateTime, String location, int capacity, String ageRestriction) {
         super(eventID, title, dateTime, location, capacity);
 
+        //Checks if input is blank
         if (ageRestriction == null || ageRestriction.isBlank()) {
             System.out.println("[Concert] Invalid ageRestriction. Using 'N/A'.");
             this.ageRestriction = "N/A";
@@ -15,10 +17,11 @@ public class Concert extends Event{
         }
     }
 
-    //Getter
+    //Getter for AgeRestriction
     public String getAgeRestriction() {
         return ageRestriction;
     }
+
 
     @Override
     public String toString() {

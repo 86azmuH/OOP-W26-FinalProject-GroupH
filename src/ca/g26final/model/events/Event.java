@@ -60,32 +60,37 @@ public class Event {
     }
 
 
-    // Getters
+    //returns Event ID
     public String getEventId() {
         return eventID;
     }
 
+    //returns Title
     public String getTitle() {
         return title;
     }
 
+    //returns Date Time
     public LocalDateTime getDateTime() {
         return dateTime;
     }
 
+    //returns Location
     public String getLocation() {
         return location;
     }
 
+    //returns Capacity
     public int getCapacity() {
         return capacity;
     }
 
+    //returns Status
     public EventStatus getStatus() {
         return status;
     }
 
-    //Setters
+    //Sets Event Title
     public void setTitle(String title) {
         if (title == null || title.isBlank()) {
             System.out.println("[Event] Title not updated");
@@ -94,7 +99,7 @@ public class Event {
         this.title = title;
     }
 
-    //setters for event service
+    //Sets Date Time
     public void setDateTime(LocalDateTime dateTime) {
         if (dateTime == null) {
             System.out.println("[Event] dateTime not updated (null)");
@@ -103,6 +108,7 @@ public class Event {
         this.dateTime = dateTime;
     }
 
+    //Sets Location
     public void setLocation(String location) {
         if (location == null || location.isBlank()) {
             System.out.println("[Event] Location not updated (invalid)");
@@ -111,6 +117,7 @@ public class Event {
         this.location = location;
     }
 
+    //Sets Capacity
     public void setCapacity(int capacity) {
         if (capacity <= 0) {
             System.out.println("[Event] Capacity not updated");
@@ -119,11 +126,12 @@ public class Event {
         this.capacity = capacity;
     }
 
-    //Status
+    //Status Changer to Cancel
     public void cancel() {
         this.status = EventStatus.CANCELLED;
     }
 
+    //Status Change to Active
     public boolean isActive() {
         return this.status == EventStatus.ACTIVE;
     }

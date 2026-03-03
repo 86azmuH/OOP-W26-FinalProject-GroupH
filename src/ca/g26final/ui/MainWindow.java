@@ -1,78 +1,110 @@
 package ca.g26final.ui;
 
-import ca.g26final.model.bookings.Booking;
-import ca.g26final.model.events.Event;
+//IMPORTS==================================================================
+import ca.g26final.model.bookings.Booking; //Model imports
+import ca.g26final.model.events.Event; 
 import ca.g26final.model.users.Guest;
 import ca.g26final.model.users.Staff;
 import ca.g26final.model.users.Student;
 import ca.g26final.model.users.User;
-import ca.g26final.service.BookingService;
+import ca.g26final.service.BookingService; //Service imports
 import ca.g26final.service.EventService;
 import ca.g26final.service.UserService;
-import java.awt.*;
+import java.awt.*; //Standard Library imports
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import javax.swing.*;
+import javax.swing.*; //Swing UI Import
 
+//Creating MainWindow Class as an extension of JFrame(Top level window container)
 public class MainWindow extends JFrame {
+
+    //Fields============================================================================================
+    //Service Fields - allows buttons to call service functions etc
     private UserService userService;
     private EventService eventService;
     private BookingService bookingService;
 
-    // text areas so we can refresh their contents later
+    //UI text areas that display current users, events, and bookings
+    //Must be fields as they are updated whenever the state chhanges
     private JTextArea usersTextArea;
     private JTextArea eventsTextArea;
     private JTextArea bookingsTextArea;
 
+    //MainWindow Constructor==================================================================================
     public MainWindow(UserService userService, EventService eventService, BookingService bookingService) {
+        //setting the fields
         this.userService = userService;
         this.eventService = eventService;
         this.bookingService = bookingService;
 
+        //Giving the frame a title and setting size,height and exit on close
         setTitle("Campus Event Booking System");
         setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Create a tabbed pane
+        //Creating a tabbedPane - allows us to have tabs for each service
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // Users Tab
+        //Adding all our tabs to the tabbedPane
+        //Users Tab - Given title and called using createUsersPanel method
         tabbedPane.addTab("Users", createUsersPanel());
 
-        // Events Tab
+        //Events Tab
         tabbedPane.addTab("Events", createEventsPanel());
 
-        // Bookings Tab
+        //Bookings Tab
         tabbedPane.addTab("Bookings", createBookingsPanel());
 
+        //adding the tabbedPane to the MainWindow Frame - JFrame uses BorderLayout by default
         add(tabbedPane);
+        //Adds to Center region, equivelent to add(tabbedPane, BorderLayout.CENTER);
     }
 
+    //CREATE PANEL METHODS=====================================================================================
+    //Method that creates the Users Panel - returns a JPanel
+    //Only used inside MainWindow -> Private
     private JPanel createUsersPanel() {
+        //Creating the panel wth a BorderLayout
         JPanel panel = new JPanel(new BorderLayout());
+        //Adds Padding
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        //Giving it a title Label
         JLabel label = new JLabel("Users Management");
         label.setFont(new Font("Arial", Font.BOLD, 16));
+        //Adding the title label to the North region
         panel.add(label, BorderLayout.NORTH);
 
+        //Creating a text Area to hold users
         usersTextArea = new JTextArea();
+        //Making it un-editable
         usersTextArea.setEditable(false);
+        //Creating a ScrollPane for textArea
         JScrollPane scrollPane = new JScrollPane(usersTextArea);
+        //adding the scrollPane containing the TextArea to the center region of the users panel
         panel.add(scrollPane, BorderLayout.CENTER);
 
+        //Creating a panel for the button
         JPanel buttonPanel = new JPanel();
+        //Creating a button to add Users
         JButton addButton = new JButton("Add User");
+        //Adding an ActionListener to the button allowing the method addUser() to be executed on press
         addButton.addActionListener(e -> addUser());
+        //adding the JButton to the buttonPanel
         buttonPanel.add(addButton);
+        //Adding the buttonPanel to the South region of the users panel
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
+        //Refreshes the Users textArea
         refreshUsers();
+        //Call refreshUsers to display nousers for now 
+        //and for When we add persistence, we want it to display the data from files
         return panel;
     }
 
+    //Essentially same thing as Users but for Events
     private JPanel createEventsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -96,6 +128,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
+    //Same thing but for bookings
     private JPanel createBookingsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -119,20 +152,31 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
-    // refresh helpers
+    //REFRESH METHODS=============================================================================================
+    //refresh helpers - functions to refresh the textAreas if changes are made.
+    //If the data is changed in any of the service objects, need to update whats displayed in the textAreas
+
     private void refreshUsers() {
+        //Creates List of Users and pulls them from userService object
         List<User> users = userService.getAllUsers();
+        //Sets text to no users if the list of users is empty
         if (users.isEmpty()) {
             usersTextArea.setText("<no users>");
         } else {
+            //StringBuilder is used to build one big string efficiently instead of doing text+= repeatedly
+            //creats StringBuilder object
             StringBuilder sb = new StringBuilder();
+            //Iterates through the list and adds the data from each user to the StringBuilder using the toString, 
+            //also adds a \n character to display each user line by line
             for (User u : users) {
                 sb.append(u.toString()).append("\n");
             }
+            //Sets the text in the TextArea to the stringBuilder using the toString
             usersTextArea.setText(sb.toString());
         }
     }
 
+    //Same thing for events
     private void refreshEvents() {
         List<Event> events = eventService.getAllEvents();
         if (events.isEmpty()) {
@@ -146,6 +190,7 @@ public class MainWindow extends JFrame {
         }
     }
 
+    //Same thing for bookings
     private void refreshBookings() {
         List<Booking> bookings = bookingService.getAllBookings();
         if (bookings.isEmpty()) {
@@ -159,9 +204,15 @@ public class MainWindow extends JFrame {
         }
     }
 
-    // actions triggered by buttons
+    //BUTTON ACTIONS========================================================================================
+    //Actions triggered by buttons
+    //UI addUser 
     private void addUser() {
+        //OptionPane for each input - popup that pauses program and allows input
+        //showInputDialog - creates a modal dialog promts user to enter a value and returns what user typed
+        //Returns String input and null if cancel is pressed
         String id = JOptionPane.showInputDialog(this, "User ID:");
+        //if cancel was pressed or input was left blank, exits addUser method
         if (id == null || id.isBlank())
             return;
         String name = JOptionPane.showInputDialog(this, "Name:");
@@ -171,7 +222,12 @@ public class MainWindow extends JFrame {
         if (email == null)
             return;
 
+        //This Section uses an overlaoded version of JOptionPane.showInputDialog
+        //It replaces the normal text field with a dropdown list.
+        //Lets user choose from predefined options
+        //List of options
         String[] types = { "Student", "Staff", "Guest" };
+        
         String type = (String) JOptionPane.showInputDialog(
                 this,
                 "Type:",

@@ -1,110 +1,159 @@
-Campus Event Booking System – Phase 1 Clarified Implementation Plan
+# Campus Event Booking System
 
-PROJECT SUMMARY:
-We are building a Java Campus Event Booking System with
-a GUI. The system must allow an admin to: - Create users (Student,
-Staff, Guest) - Create events (Workshop, Seminar, Concert) - Book users
-into events - Cancel bookings - Manage waitlists - Automatically promote
-waitlisted users when a confirmed booking is cancelled
+This repository contains a simple Java desktop application for managing
+campus events, users, and bookings. The focus of **Phase 1** is the core
+logic and a basic Swing GUI. During our demo we'll walk through each
+layer of the project and point out the main responsibilities.
 
-This is Phase 1 (Core System). We are NOT implementing search/filter,
-full persistence, or JUnit testing in Phase 1.
+Reminder:
+- Our Project Follows an MVC Architechture Pattern(Model, View, Controller)
+- Persistence was not done yet as it was not a part of Phase 1's requirements, So we havent implemented it yet
+- Theres a lack of branching in our git, this is because we started this project without much knowledge on git -> We plan to implement branches as we work on Phase 2
 
-CORE DESIGN DECISIONS We are using ArrayList-based storage only. We are
-NOT using Maps. We are NOT using a Repository pattern. All system data
-will be stored inside BookingService.
 
-FOLDER STRUCTURE src/ca/g26final model/ bookings/ events/ users/
-service/ BookingService.java EventService.java UserService.java ui/
-App.java
+---
 
-DATA STORAGE DESIGN Inside BookingService: - ArrayList users - ArrayList
-events - ArrayList bookings
+## 🧩 Project Overview
 
-REQUIRED MODEL CLASSES
+An administrator can:
 
-1.  USER HIERARCHY Abstract class User Fields:
+1. Create users (Student, Staff, Guest)
+2. Create events (Workshop, Seminar, Concert)
+3. Book users into events
+4. Cancel bookings
+5. Waitlist users when an event is full
+6. Automatically promote from the waitlist when a confirmed booking is
+   cancelled
 
--   userId (String)
--   name (String)
--   email (String) Methods:
--   getters
--   toString()
--   abstract int getMaxConfirmedBookings()
+> ⚠️ Phase 1 intentionally omits search/filter, persistence, and
+> automated tests – those are planned for later phases.
 
-Student extends User - getMaxConfirmedBookings() returns 3
+---
 
-Staff extends User - returns 5
+## 📁 Key Packages & Folders
 
-Guest extends User - returns 1
+The `src/ca/g26final` package is split into:
 
-2.  EVENT HIERARCHY Abstract class Event Fields:
+* `model` – domain objects (users, events, bookings)
+* `service` – application logic and storage
+* `ui` – Swing-based graphical interface
 
--   eventId
--   title
--   dateTime (LocalDateTime)
--   location
--   capacity (> 0)
--   status (EventStatus) Methods:
--   getters
--   cancel()
--   isActive()
+```
+src/ca/g26final
+├── model
+│   ├── bookings
+│   ├── events
+│   └── users
+├── service
+│   ├── BookingService.java
+│   ├── EventService.java
+│   └── UserService.java
+└── ui
+    └── MainWindow.java
+```
 
-Workshop extends Event - topic
+> The `bin` folder contains compiled classes produced by the build.
 
-Seminar extends Event - speakerName
+---
 
-Concert extends Event - ageRestriction (display only)
+## 🔧 Data Storage (BookingService)
 
-3.  BOOKING CLASS Fields:
+All data lives in `BookingService` using simple `ArrayList` collections:
+`users`, `events`, and `bookings`. No maps or repository patterns are
+used; this keeps the implementation straightforward for Phase 1.
 
--   bookingId
--   userId
--   eventId
--   createdAt (LocalDateTime)
--   status (BookingStatus)
+---
 
-BookingStatus values: - CONFIRMED - WAITLISTED - CANCELLED
+## 🧠 Domain Model
 
-BOOKING RULES
+### 1. User hierarchy
 
-When booking: 1. User must exist 2. Event must exist and be ACTIVE 3. No
-duplicate booking for same user/event 4. Confirmed booking limits:
-Student: 3 Staff: 5 Guest: 1 5. If confirmed count < capacity →
-CONFIRMED Else → WAITLISTED
+* `User` (abstract)
+  * Fields: `userId`, `name`, `email`
+  * Method: `getMaxConfirmedBookings()` – overridden by subclasses
+* `Student` – allows 3 active bookings
+* `Staff` – allows 5 active bookings
+* `Guest` – allows 1 active booking
 
-CANCEL BOOKING RULES
+### 2. Event hierarchy
 
-If WAITLISTED: - Set status to CANCELLED
+* `Event` (abstract)
+  * Fields: `eventId`, `title`, `dateTime`, `location`, `capacity`,
+    `status`
+  * Methods: getters, `cancel()`, `isActive()`
+* Subclasses add type‑specific data:
+  * `Workshop` → `topic`
+  * `Seminar` → `speakerName`
+  * `Concert` → `ageRestriction` (display only)
 
-If CONFIRMED: - Set status to CANCELLED - Promote earliest WAITLISTED
-booking for that event
+### 3. Booking class
 
-CANCEL EVENT RULES - Set event status to CANCELLED - Cancel all
-CONFIRMED and WAITLISTED bookings for that event
+* Fields: `bookingId`, `userId`, `eventId`, `createdAt`, `status`
+* `BookingStatus`: `CONFIRMED`, `WAITLISTED`, `CANCELLED`
 
-SERVICE RESPONSIBILITIES
+>User and event IDs link bookings to their parent objects.
 
-BookingService: - Stores users, events, bookings - addUser() -
-addEvent() - bookEvent() - cancelBooking() - getBookingsForUser() -
-getEvents() - getUsers()
+---
 
-UserService: - Creates User objects - Validates unique userId - Calls
-bookingService.addUser()
+## 🔁 Booking Rules (Core Logic)
 
-EventService: - Creates Event objects - Validates unique eventId and
-capacity - Calls bookingService.addEvent()
+1. User and event must exist & event must be **ACTIVE**
+2. No duplicate bookings for the same user/event
+3. Respect per‑user confirmed booking limits
+4. If event capacity isn’t reached → `CONFIRMED`, otherwise
+   `WAITLISTED`
 
-GUI REQUIREMENTS (Phase 1) Must allow: - Add User - List Users - Add
-Event - List Events - Book Event - Cancel Booking - View event roster
-(confirmed + waitlisted)
+### 🛑 Cancellation behavior
 
-REQUIRED DEMO SCENARIO 1. Create event with capacity = 1 2. Book User A
-→ CONFIRMED 3. Book User B → WAITLISTED 4. Cancel User A booking 5. User
-B becomes CONFIRMED automatically
+* **WAITLISTED** cancellation → status set to `CANCELLED` only
+* **CONFIRMED** cancellation → status set to `CANCELLED` and the
+  earliest waitlisted booking for that event is promoted
 
-IMPLEMENTATION ORDER 1. Create enums 2. Create User hierarchy 3. Create
-Event hierarchy 4. Create Booking class 5. Implement BookingService
-(ArrayLists) 6. Implement UserService and EventService 7. Build GUI 8.
-Test promotion logic
+### 🧨 Cancelling an event
 
+When an event is cancelled, all its confirmed and waitlisted bookings
+are marked `CANCELLED` and the event’s status flips to `CANCELLED`.
+
+---
+
+## 🛠 Service Layer Responsibilities
+
+* **BookingService** – holds lists and implements all operations:
+  adding users/events, booking, cancelling, and retrieval helpers.
+* **UserService** – validates and constructs `User` instances.
+* **EventService** – validates and constructs `Event` instances.
+
+Both `UserService` and `EventService` delegate to `BookingService` after
+their checks.
+
+---
+
+## 🖥 GUI Walk‑through (MainWindow)
+
+The Swing-based UI provides buttons for each required action: add/list
+users, add/list events, book/cancel, and view event rosters. During the
+demo we’ll step through each screen and show how it ties back to the
+service layer.
+
+---
+
+## 🎯 Demo Scenario
+
+To highlight the waitlist promotion logic, we’ll perform the following
+actions:
+
+1. Create an event with capacity 1
+2. Book **User A** → `CONFIRMED`
+3. Book **User B** → `WAITLISTED`
+4. Cancel **User A**’s booking
+5. Observe **User B** automatically become `CONFIRMED`
+
+This simple sequence demonstrates the core functionality of the system
+and will be the backbone of our presentation.
+
+---
+
+_Want to explore further? Take a look at `src/` to read the code or run
+`App` from the command line._
+
+Good luck with your demo! 🚀

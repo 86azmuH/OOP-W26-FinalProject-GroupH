@@ -111,9 +111,7 @@ public class Booking {
     public void setBookingStatus(BookingStatus bookingStatus) {
         // If the new status is null, do not change anything
         if (bookingStatus == null) {
-            System.out.println("[Booking] Status not updated");
-            return;
-        }
+        
         this.bookingStatus = bookingStatus;
     }
 
@@ -126,9 +124,10 @@ public class Booking {
                 ", eventId='" + eventId + '\'' +
                 ", createdAt=" + createdAt +
                 ", bookingStatus=" + bookingStatus +
-                '}';
+                '}';  //returns all important aspects of this class. 
     }
 }
+
 
 
 

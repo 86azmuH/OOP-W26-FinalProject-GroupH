@@ -3,7 +3,6 @@ package ca.g26final.model.bookings;
 import ca.g26final.model.events.Event;
 import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
-// 1c enterprise
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
@@ -269,3 +268,4 @@ public class BookingManager {
         return changed;
     }
 }
+

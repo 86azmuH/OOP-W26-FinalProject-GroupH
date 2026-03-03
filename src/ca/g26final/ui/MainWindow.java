@@ -1,6 +1,6 @@
 package ca.g26final.ui;
 
-//IMPORTS==================================================================
+//  // ===================================== IMPORTS ================================================
 import ca.g26final.model.bookings.Booking; //Model imports
 import ca.g26final.model.events.Event; 
 import ca.g26final.model.users.Guest;
@@ -19,7 +19,7 @@ import javax.swing.*; //Swing UI Import
 //Creating MainWindow Class as an extension of JFrame(Top level window container)
 public class MainWindow extends JFrame {
 
-    //Fields============================================================================================
+    // ===================================== FIELDS  =====================================================
     //Service Fields - allows buttons to call service functions etc
     private UserService userService;
     private EventService eventService;
@@ -31,7 +31,7 @@ public class MainWindow extends JFrame {
     private JTextArea eventsTextArea;
     private JTextArea bookingsTextArea;
 
-    //MainWindow Constructor==================================================================================
+    //  // ===================================== MAIN WINDOW CONSTRUCTOR  =================================
     public MainWindow(UserService userService, EventService eventService, BookingService bookingService) {
         //setting the fields
         this.userService = userService;
@@ -62,7 +62,7 @@ public class MainWindow extends JFrame {
         //Adds to Center region, equivelent to add(tabbedPane, BorderLayout.CENTER);
     }
 
-    //CREATE PANEL METHODS=====================================================================================
+    // ===================================== CREATING PANEL METHODS  =====================================================
     //Method that creates the Users Panel - returns a JPanel
     //Only used inside MainWindow -> Private
     private JPanel createUsersPanel() {
@@ -104,7 +104,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
-    //Essentially same thing as Users but for Events
+    // Create Panel for Events similar to User
     private JPanel createEventsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -128,7 +128,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
-    //Same thing but for bookings
+    // Create Panel for Bookings similar to User
     private JPanel createBookingsPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -152,7 +152,7 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
-    //REFRESH METHODS=============================================================================================
+    // ===================================== REFRESH METHODS  =====================================================
     //refresh helpers - functions to refresh the textAreas if changes are made.
     //If the data is changed in any of the service objects, need to update whats displayed in the textAreas
 
@@ -204,9 +204,9 @@ public class MainWindow extends JFrame {
         }
     }
 
-    //BUTTON ACTIONS========================================================================================
-    //Actions triggered by buttons
-    //UI addUser 
+    // ===================================== BUTTON ACTIONS =====================================================
+    // Actions triggered by buttons
+    // Add User Button
     private void addUser() {
         //OptionPane for each input - popup that pauses program and allows input
         //showInputDialog - creates a modal dialog promts user to enter a value and returns what user typed
@@ -222,7 +222,7 @@ public class MainWindow extends JFrame {
         if (email == null)
             return;
 
-        //This Section uses an overlaoded version of JOptionPane.showInputDialog
+        //This Section uses an overloaded version of JOptionPane.showInputDialog
         //It replaces the normal text field with a dropdown list.
         //Lets user choose from predefined options
         //List of options
@@ -239,6 +239,7 @@ public class MainWindow extends JFrame {
         if (type == null)
             return;
 
+        //Initialize the correct constructor based on input
         User user;
         switch (type) {
             case "Student":
@@ -251,7 +252,7 @@ public class MainWindow extends JFrame {
                 user = new Guest(id, name, email);
                 break;
         }
-
+        // Run back-end logic to validate adding user to the ArrayList.
         boolean ok = userService.addUser(user);
         if (ok)
             JOptionPane.showMessageDialog(this, "User added");
@@ -259,8 +260,9 @@ public class MainWindow extends JFrame {
             JOptionPane.showMessageDialog(this, "Failed to add user (check console for details)");
         refreshUsers();
     }
-
+    // Add Event Button
     private void addEvent() {
+        // Input Prompts that are stored to the respective variables.
         String id = JOptionPane.showInputDialog(this, "Event ID:");
         if (id == null || id.isBlank())
             return;
@@ -291,6 +293,7 @@ public class MainWindow extends JFrame {
             return;
         }
 
+        // Run back-end logic to see if Event was added successfully.
         Event ev = new Event(id, title, dt, location, cap);
         boolean ok = eventService.addEvent(ev);
         if (ok)
@@ -301,6 +304,7 @@ public class MainWindow extends JFrame {
     }
 
     private void bookEvent() {
+        // Input Prompts that are stored to the respective variables.
         String userId = JOptionPane.showInputDialog(this, "User ID:");
         if (userId == null || userId.isBlank())
             return;
@@ -308,6 +312,7 @@ public class MainWindow extends JFrame {
         if (eventId == null || eventId.isBlank())
             return;
 
+        // Back-end Validation to see if booking was successful.
         Booking booking = bookingService.bookEvent(userId, eventId);
         if (booking != null) {
             JOptionPane.showMessageDialog(this, "Booking created: " + booking.getBookingId());

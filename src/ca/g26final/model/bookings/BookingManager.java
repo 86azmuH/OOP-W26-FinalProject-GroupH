@@ -93,7 +93,7 @@ public class BookingManager {
             return false;
         }
 
-        //
+        //loops through bookings to find the booking via the booking id and ensures its cancelled
         for (Booking booking : bookings) {
             if (booking.getBookingId().equals(bookingId)) {
 
@@ -116,7 +116,7 @@ public class BookingManager {
         return true;
     }
 
-    //
+    //promotes the first waitlisted booking for an event to confirmed
     private void promoteFirstWaitlistedBooking(String eventId) {
         for (Booking booking : bookings) {
             if (booking.getEventId().equals(eventId)
@@ -128,6 +128,7 @@ public class BookingManager {
         }
     }
 
+    //returns bookings for user
     public ArrayList<Booking> getBookingsForUser(String userId) {
         ArrayList<Booking> result = new ArrayList<>();
 
@@ -143,6 +144,7 @@ public class BookingManager {
         return result;
     }
 
+    //returns bookings for event
     public ArrayList<Booking> getBookingsForEvent(String eventId) {
         ArrayList<Booking> result = new ArrayList<>();
 
@@ -155,6 +157,7 @@ public class BookingManager {
         return result;
     }
 
+    //returns confirmed bookings for event
     public ArrayList<Booking> getConfirmedBookingsForEvent(String eventId) {
         ArrayList<Booking> result = new ArrayList<>();
 
@@ -168,6 +171,7 @@ public class BookingManager {
         return result;
     }
 
+    //returns waitlisted bookings for event
     public ArrayList<Booking> getWaitlistedBookingsForEvent(String eventId) {
         ArrayList<Booking> result = new ArrayList<>();
 
@@ -181,6 +185,7 @@ public class BookingManager {
         return result;
     }
 
+    //returns confirmed bookings for event
     public int countConfirmedBookingsForEvent(String eventId) {
         int count = 0;
 
@@ -194,6 +199,7 @@ public class BookingManager {
         return count;
     }
 
+    //returtns confirmed bookings for user
     public int countConfirmedBookingsForUser(String userId) {
         int count = 0;
 
@@ -207,11 +213,13 @@ public class BookingManager {
         return count;
     }
 
+    //returns all bookings
     public ArrayList<Booking> getAllBookings() {
         return bookings;
     }
 
     // Cancels all bookings for an event without promoting from waitlist. Used this when an event is cancelled.
+    //later on changed can be used as feedback on the gui for the user to see how many bookins were changed
     public int cancelAllBookingsForEventNoPromotion(String eventId) {
         if (eventId == null || eventId.isBlank()) {
             System.out.println("[BookingManager] cancelAllBookingsForEvent_NoPromotion failed: eventId blank");

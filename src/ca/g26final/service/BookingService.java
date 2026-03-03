@@ -23,11 +23,13 @@ public class BookingService {
     // Books an event using IDs (returns Booking or null if failed)
     public Booking bookEvent(String userId, String eventId) {
 
+        //checks that user id is valid
         if (userId == null || userId.isBlank()) {
             System.out.println("[BookingService] bookEvent failed: userId blank");
             return null;
         }
 
+        //checks that event id is valid
         if (eventId == null || eventId.isBlank()) {
             System.out.println("[BookingService] bookEvent failed: eventId blank");
             return null;
@@ -39,6 +41,7 @@ public class BookingService {
             return null;
         }
 
+        //creates an object even and searches through stored events, returning an event if it finds one and returning null if it does not
         Event event = eventService.getEventById(eventId.trim());
         if (event == null) {
             System.out.println("[BookingService] bookEvent failed: event not found " + eventId);
@@ -75,6 +78,7 @@ public class BookingService {
         return bookingManager.getWaitlistedBookingsForEvent(eventId);
     }
 
+    //cancels everything
     public boolean cancelEventAndCancelBookings(String eventId) {
 
         if (eventId == null || eventId.isBlank()) {
@@ -100,10 +104,6 @@ public class BookingService {
         return true;
     }
 
-    // Cancel a waitlisted booking as well (same cancelBooking)
-    public boolean cancelWaitlistedBooking(String bookingId) {
-        return cancelBooking(bookingId);
-    }
 
     // expose all bookings for UI purposes
     public ArrayList<Booking> getAllBookings() {

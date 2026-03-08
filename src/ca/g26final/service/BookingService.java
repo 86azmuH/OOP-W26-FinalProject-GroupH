@@ -110,4 +110,35 @@ public class BookingService {
         return bookingManager.getAllBookings();
     }
 
+
+    // Check for User Booking
+    public boolean hasBookingsForUser(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return false;
+        }
+
+        for (Booking b : getAllBookings()) {
+            if (b.getUserId().equals(userId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Check for Event Booking
+    public boolean hasBookingsForEvent(String eventId) {
+        if (eventId == null || eventId.isBlank()) {
+            return false;
+        }
+
+        for (Booking b : getAllBookings()) {
+            if (b.getEventId().equals(eventId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

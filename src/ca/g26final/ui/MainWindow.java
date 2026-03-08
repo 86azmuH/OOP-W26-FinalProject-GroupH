@@ -86,6 +86,7 @@ public class MainWindow extends JFrame {
         //adding the scrollPane containing the TextArea to the center region of the users panel
         panel.add(scrollPane, BorderLayout.CENTER);
 
+        //ADD USER
         //Creating a panel for the button
         JPanel buttonPanel = new JPanel();
         //Creating a button to add Users
@@ -96,6 +97,14 @@ public class MainWindow extends JFrame {
         buttonPanel.add(addButton);
         //Adding the buttonPanel to the South region of the users panel
         panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        //REMOVE USER
+        JButton removeButton = new JButton("Remove User");
+        removeButton.addActionListener(e -> removeUser());
+        buttonPanel.add(removeButton);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
 
         //Refreshes the Users textArea
         refreshUsers();
@@ -119,9 +128,15 @@ public class MainWindow extends JFrame {
         panel.add(scrollPane, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel();
+        // ADD EVENT
         JButton addButton = new JButton("Add Event");
         addButton.addActionListener(e -> addEvent());
         buttonPanel.add(addButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        // REMOVE EVENT
+        JButton removeButton = new JButton("Remove Event");
+        removeButton.addActionListener(e -> removeEvent());
+        buttonPanel.add(removeButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         refreshEvents();
@@ -322,4 +337,44 @@ public class MainWindow extends JFrame {
         refreshBookings();
     }
 
+    //==================================== REMOVE FUNCTIONS =============================================
+
+    private void removeUser(){
+        String id = JOptionPane.showInputDialog(this, "Enter User ID to remove:");
+        if (id == null || id.isBlank()){
+            return;
+        }
+
+        if (bookingService.hasBookingsForUser(id)){
+            JOptionPane.showMessageDialog(this, "Cannot remove user: this user has existing bookings");
+            return;
+        }
+        boolean ok = userService.removeUser(id);
+        if(ok){
+            JOptionPane.showMessageDialog(this, "User removed");
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to remove user (user may not exist)");
+        }
+        refreshUsers();
+    }
+
+    private void removeEvent(){
+        String id = JOptionPane.showInputDialog(this, "Enter Event ID to remove:");
+        if(id == null || id.isBlank()){
+            return;
+        }
+
+        if(bookingService.hasBookingsForEvent(id)){
+            JOptionPane.showMessageDialog(this, "Cannot remove event: this event has existing bookings.");
+            return;
+        }
+
+        boolean ok = eventService.removeEvent(id);
+        if(ok){
+            JOptionPane.showMessageDialog(this, "Event removed");
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to remove event (event may not exist)");
+        }
+        refreshEvents();
+    }
 }

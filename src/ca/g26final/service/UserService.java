@@ -57,4 +57,20 @@ public class UserService {
     public boolean userExists(String userId) {
         return getUserById(userId) != null;
     }
+
+    // Removes a user with the given userId
+    public boolean removeUser(String userId){
+        if (userId == null || userId.isBlank()) {
+            System.out.println("[UserService] removeUser failed: userId is blank.");
+            return false;
+        }
+        User user = getUserById(userId);
+        if(user == null){
+            System.out.println("[UserService] removeUser failed: user not found.");
+            return false;
+        }
+
+        users.remove(user);
+        return true;
+    }
 }

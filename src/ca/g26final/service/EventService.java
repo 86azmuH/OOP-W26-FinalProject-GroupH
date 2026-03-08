@@ -103,4 +103,21 @@ public class EventService {
         Event e = getEventById(eventId);
         return e != null && e.getStatus() == EventStatus.ACTIVE;
     }
+
+    //Remove event by EventId
+    public boolean removeEvent(String eventId){
+        if(eventId == null || eventId.isBlank()){
+            System.out.println("[EventService] removeEvent failed: eventId is blank.");
+            return false;
+        }
+
+        Event event = getEventById(eventId);
+        if(event == null){
+            System.out.println("[EventService] removeEvent failed: event not found");
+            return false;
+        }
+
+        events.remove(event);
+        return true;
+    }
 }

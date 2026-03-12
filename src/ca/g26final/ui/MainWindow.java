@@ -134,8 +134,8 @@ public class MainWindow extends JFrame {
         buttonPanel.add(addButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
         // REMOVE EVENT
-        JButton removeButton = new JButton("Remove Event");
-        removeButton.addActionListener(e -> removeEvent());
+        JButton removeButton = new JButton("Cancel Event");
+        removeButton.addActionListener(e -> cancelEvent());
         buttonPanel.add(removeButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -161,6 +161,11 @@ public class MainWindow extends JFrame {
         JButton bookButton = new JButton("Book Event");
         bookButton.addActionListener(e -> bookEvent());
         buttonPanel.add(bookButton);
+
+        JButton cancelButton = new JButton("Cancel Booking");
+        cancelButton.addActionListener(e -> cancelBooking());
+        buttonPanel.add(cancelButton);
+
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         refreshBookings();
@@ -337,7 +342,7 @@ public class MainWindow extends JFrame {
         refreshBookings();
     }
 
-    //==================================== REMOVE FUNCTIONS =============================================
+    //==================================== REMOVE / CANCEL METHODS =============================================
 
     private void removeUser(){
         String id = JOptionPane.showInputDialog(this, "Enter User ID to remove:");
@@ -357,24 +362,36 @@ public class MainWindow extends JFrame {
         }
         refreshUsers();
     }
-
-    private void removeEvent(){
-        String id = JOptionPane.showInputDialog(this, "Enter Event ID to remove:");
+    // CANCEL EVENT
+    private void cancelEvent(){
+        String id = JOptionPane.showInputDialog(this, "Enter Event ID to cancel:");
         if(id == null || id.isBlank()){
             return;
         }
-
-        if(bookingService.hasBookingsForEvent(id)){
-            JOptionPane.showMessageDialog(this, "Cannot remove event: this event has existing bookings.");
+        boolean ok = eventService.cancelEvent(id);
+        if(ok){
+            int changed = bookingService.cancelBookingsForEvent(id);
+            JOptionPane.showMessageDialog(this, "Event cancelled. \nBookings cancelled: " + changed);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to cancel event (event may not exist)");
+        }
+        refreshEvents();
+        refreshBookings();
+    }
+    // CANCEL BOOKING
+    private void cancelBooking(){
+        String bookingId = JOptionPane.showInputDialog(this, "Enter Booking ID to cancel");
+        if(bookingId == null || bookingId.isBlank()){
             return;
         }
 
-        boolean ok = eventService.removeEvent(id);
+        boolean ok = bookingService.cancelBooking(bookingId);
+
         if(ok){
-            JOptionPane.showMessageDialog(this, "Event removed");
+            JOptionPane.showMessageDialog(this, "Booking cancelled");
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to remove event (event may not exist)");
+            JOptionPane.showMessageDialog(this, "Failed to cancel booking (booking may not exist)");
         }
-        refreshEvents();
+        refreshBookings();
     }
 }

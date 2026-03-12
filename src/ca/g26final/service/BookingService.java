@@ -3,6 +3,7 @@ package ca.g26final.service;
 import ca.g26final.model.bookings.Booking;
 import ca.g26final.model.bookings.BookingManager;
 import ca.g26final.model.events.Event;
+import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
 
 import java.util.ArrayList;
@@ -45,6 +46,11 @@ public class BookingService {
         Event event = eventService.getEventById(eventId.trim());
         if (event == null) {
             System.out.println("[BookingService] bookEvent failed: event not found " + eventId);
+            return null;
+        }
+
+        if(event.getStatus() == EventStatus.CANCELLED){
+            System.out.println("[BookingService] bookEvent failed: event is cancelled");
             return null;
         }
 
@@ -141,4 +147,7 @@ public class BookingService {
         return false;
     }
 
+    public int cancelBookingsForEvent(String eventId) {
+        return bookingManager.cancelAllBookingsForEventNoPromotion(eventId);
+    }
 }

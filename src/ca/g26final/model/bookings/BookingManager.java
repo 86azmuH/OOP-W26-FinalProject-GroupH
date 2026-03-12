@@ -129,9 +129,7 @@ public class BookingManager {
                 return true;
             }
         }
-
-        // This currently returns true even if the booking was not found
-        return true;
+        return false;
     }
 
     // Finds the first waitlisted booking for an event

@@ -104,20 +104,25 @@ public class EventService {
         return e != null && e.getStatus() == EventStatus.ACTIVE;
     }
 
-    //Remove event by EventId
+    //Cancel event by EventId
     public boolean removeEvent(String eventId){
         if(eventId == null || eventId.isBlank()){
-            System.out.println("[EventService] removeEvent failed: eventId is blank.");
+            System.out.println("[EventService] cancelEvent failed: eventId is blank.");
             return false;
         }
 
-        Event event = getEventById(eventId);
-        if(event == null){
-            System.out.println("[EventService] removeEvent failed: event not found");
-            return false;
+        for (Event event: events){
+            if(event.getEventId().equalsIgnoreCase(eventId)){
+                if(event.getStatus() == EventStatus.CANCELLED){
+                    System.out.println("[EventService] cancelEvent failed: event already cancelled");
+                    return false;
+                }
+                event.cancel();
+                return true;
+            }
         }
 
-        events.remove(event);
-        return true;
+        System.out.println("[EventService] cancelEvent failed: event not found");
+        return false;
     }
 }

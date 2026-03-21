@@ -150,4 +150,24 @@ public class BookingService {
     public int cancelBookingsForEvent(String eventId) {
         return bookingManager.cancelAllBookingsForEventNoPromotion(eventId);
     }
+    // Kayden changed this to be safer (avoid iterating while looping)
+    // Make sure you understand
+    public boolean removeWaitlistedBooking(String bookingId) {
+        Booking target = null;
+
+        for (Booking b : bookingManager.getAllBookings()) {
+            if (b.getBookingId().equalsIgnoreCase(bookingId)
+                    && b.toString().contains("WAITLISTED")) {
+                target = b;
+                break;
+            }
+        }
+
+        if (target != null) {
+            return cancelBooking(bookingId);
+        }
+
+        return false;
+    }
+
 }

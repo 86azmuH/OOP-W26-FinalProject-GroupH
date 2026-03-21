@@ -1,6 +1,7 @@
 package ca.g26final.model.bookings;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Booking {
 
@@ -58,6 +59,7 @@ public class Booking {
             this.createdAt = LocalDateTime.now(); // uses the current date and time
             valid = false;
         } else {
+
             this.createdAt = createdAt;
         }
 
@@ -119,13 +121,14 @@ public class Booking {
     // Converts the Booking object into a readable string
     @Override
     public String toString() {
-        return "Booking{" +
-                "bookingId='" + bookingId + '\'' +
-                ", userId='" + userId + '\'' +
-                ", eventId='" + eventId + '\'' +
-                ", createdAt=" + createdAt +
-                ", bookingStatus=" + bookingStatus +
-                '}';  //returns all important aspects of this class. 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        return "Booking { " +
+                "bookingId: " + bookingId +
+                "| userId: " + userId +
+                "| eventId: " + eventId +
+                "| createdAt: " + createdAt.format(formatter) +
+                "| bookingStatus: " + bookingStatus +
+                " }";  //returns all important aspects of this class.
     }
 }
 

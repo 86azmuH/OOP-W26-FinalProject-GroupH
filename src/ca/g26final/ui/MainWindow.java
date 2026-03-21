@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import javax.swing.*; //Swing UI Import
+import java.time.format.DateTimeFormatter;
 
 // </editor-fold>
 
@@ -102,14 +103,18 @@ public class MainWindow extends JFrame {
         addButton.addActionListener(e -> addUser());
         //adding the JButton to the buttonPanel
         buttonPanel.add(addButton);
-        //Adding the buttonPanel to the South region of the users panel
-        panel.add(buttonPanel, BorderLayout.SOUTH);
 
         //REMOVE USER
         JButton removeButton = new JButton("Remove User");
         removeButton.addActionListener(e -> removeUser());
         buttonPanel.add(removeButton);
 
+        // VIEW USER DETAILS
+        JButton detailsButton = new JButton("View User Details");
+        detailsButton.addActionListener(e -> viewUserDetails());
+        buttonPanel.add(detailsButton);
+
+        //Adds panel to display buttons at south region
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
 
@@ -196,13 +201,11 @@ public class MainWindow extends JFrame {
         JPanel buttonPanel = new JPanel();
 
         JButton viewButton = new JButton("View Event Waitlist");
-        //viewButton.addActionListener(e -> viewEventWaitlist());
-        // NEED WAITLIST METHODS !!!!
+        viewButton.addActionListener(e -> viewWaitlist());
         buttonPanel.add(viewButton);
 
         JButton removeButton = new JButton("Remove Waitlisted Booking");
-        // removeButton.addActionListener(e-> removeWaitListedBooking());
-        // NNED WAITLIST METHODS !!!!
+        removeButton.addActionListener(e-> removeWaitlist());
         buttonPanel.add(removeButton);
 
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -384,6 +387,108 @@ public class MainWindow extends JFrame {
         }
         refreshBookings();
     }
+
+    // View User Details
+    private void viewUserDetails() {
+        String userId = JOptionPane.showInputDialog(this, "Enter User ID:");
+        if (userId == null || userId.isBlank()) {
+            return;
+        }
+
+        // Searches for the user and sets foundUser to the user of interest
+        User foundUser = null;
+        for (User u : userService.getAllUsers()) {
+            if (u.getUserId().equalsIgnoreCase(userId)) {
+                foundUser = u;
+                break;
+            }
+        }
+
+        // If nothing is set to foundUser then it could not locate it in the previous loop.
+        if (foundUser == null) {
+            JOptionPane.showMessageDialog(this, "User not found");
+            return;
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+
+        // Building the display for the found user
+        StringBuilder sb = new StringBuilder();
+        sb.append("User Details\n");
+        sb.append("-------------------------\n");
+        sb.append("User ID: ").append(foundUser.getUserId()).append("\n");
+        sb.append("Name: ").append(foundUser.getName()).append("\n");
+        sb.append("Email: ").append(foundUser.getEmail()).append("\n");
+        sb.append("Type: ").append(foundUser.getClass().getSimpleName()).append("\n\n");
+        // Get simple name converts into a clean string
+
+        sb.append("Bookings Summary\n");
+        sb.append("-------------------------\n");
+
+        // Checks for all bookings associated with user and adds to our string builder.
+        int count = 0;
+        for (Booking b : bookingService.getAllBookings()) {
+            if (b.getUserId().equalsIgnoreCase(userId)) {
+                sb.append("Booking ID: ").append(b.getBookingId()).append("\n");
+                sb.append("Event ID: ").append(b.getEventId()).append("\n");
+                sb.append("Status: ").append(b.getBookingStatus()).append("\n");
+                sb.append("Created At: ").append(b.getCreatedAt().format(formatter)).append("\n");
+                sb.append("-------------------------\n");
+                count++;
+            }
+        }
+        if (count == 0) {
+            sb.append("No bookings found for this user.\n");
+        }
+
+        JOptionPane.showMessageDialog(this, sb.toString());
+    }
+
+    // Waitlist Buttons
+    private void viewWaitlist(){
+        String eventId = JOptionPane.showInputDialog(this, "Enter Event ID:");
+        if(eventId == null || eventId.isBlank()){
+            return;
+        }
+
+        List<Booking> waitlist = bookingService.getWaitlist(eventId);
+
+        if(waitlist.isEmpty()) {
+            waitlistTextArea.setText("No waitlisted bookings for event" + eventId);
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Waitlist for Event ").append(eventId).append("\n\n");
+
+        for (Booking b : waitlist) {
+            sb.append(b.toString()).append("\n");
+        }
+
+        waitlistTextArea.setText(sb.toString());
+    }
+
+    private void removeWaitlist(){
+        String bookingId = JOptionPane.showInputDialog(this,
+                "Enter Booking ID to remove from waitlist: ");
+        if(bookingId == null || bookingId.isBlank()){
+            return;
+        }
+
+        boolean ok = bookingService.removeWaitlistedBooking(bookingId);
+
+        if(ok){
+            JOptionPane.showMessageDialog(this, "Wailisted booking removed");
+            refreshBookings();
+            waitlistTextArea.setText("Waitlisted booking " + bookingId + " was removed.");
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to " +
+                    "remove waitlisted booking");
+        }
+    }
+
+
 
     // </editor-fold>
     // <editor-fold desc = "=== REMOVE + CANCEL ===">

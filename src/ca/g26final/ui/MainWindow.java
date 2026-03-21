@@ -1,6 +1,7 @@
 package ca.g26final.ui;
+// <editor-fold desc = "=== IMPORTS ===">
 
-//  // ===================================== IMPORTS ================================================
+// ===================================== IMPORTS ================================================
 import ca.g26final.model.bookings.Booking; //Model imports
 import ca.g26final.model.events.Event; 
 import ca.g26final.model.users.Guest;
@@ -16,6 +17,8 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import javax.swing.*; //Swing UI Import
 
+// </editor-fold>
+
 //Creating MainWindow Class as an extension of JFrame(Top level window container)
 public class MainWindow extends JFrame {
 
@@ -30,6 +33,7 @@ public class MainWindow extends JFrame {
     private JTextArea usersTextArea;
     private JTextArea eventsTextArea;
     private JTextArea bookingsTextArea;
+    private JTextArea waitlistTextArea;
 
     //  // ===================================== MAIN WINDOW CONSTRUCTOR  =================================
     public MainWindow(UserService userService, EventService eventService, BookingService bookingService) {
@@ -57,11 +61,14 @@ public class MainWindow extends JFrame {
         //Bookings Tab
         tabbedPane.addTab("Bookings", createBookingsPanel());
 
+        //Waitlist Tab
+        tabbedPane.addTab("Waitlist", createWaitlistPanel());
+
         //adding the tabbedPane to the MainWindow Frame - JFrame uses BorderLayout by default
         add(tabbedPane);
         //Adds to Center region, equivelent to add(tabbedPane, BorderLayout.CENTER);
     }
-
+    // <editor-fold desc = "=== PANELS ===">
     // ===================================== CREATING PANEL METHODS  =====================================================
     //Method that creates the Users Panel - returns a JPanel
     //Only used inside MainWindow -> Private
@@ -172,6 +179,40 @@ public class MainWindow extends JFrame {
         return panel;
     }
 
+    // Waitlist Panel
+    private JPanel createWaitlistPanel(){
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
+        JLabel label = new JLabel("Waitlist Management");
+        label.setFont(new Font("Arial", Font.BOLD, 16));
+        panel.add(label, BorderLayout.NORTH);
+
+        waitlistTextArea = new JTextArea();
+        waitlistTextArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(waitlistTextArea);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+
+        JButton viewButton = new JButton("View Event Waitlist");
+        //viewButton.addActionListener(e -> viewEventWaitlist());
+        // NEED WAITLIST METHODS !!!!
+        buttonPanel.add(viewButton);
+
+        JButton removeButton = new JButton("Remove Waitlisted Booking");
+        // removeButton.addActionListener(e-> removeWaitListedBooking());
+        // NNED WAITLIST METHODS !!!!
+        buttonPanel.add(removeButton);
+
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+
+        waitlistTextArea.setText("Select an event to view the waitlist.");
+        return panel;
+    }
+
+    // </editor-fold>
+    // <editor-fold desc = "=== REFRESH ===">
     // ===================================== REFRESH METHODS  =====================================================
     //refresh helpers - functions to refresh the textAreas if changes are made.
     //If the data is changed in any of the service objects, need to update whats displayed in the textAreas
@@ -224,12 +265,14 @@ public class MainWindow extends JFrame {
         }
     }
 
+    // </editor-fold>
+    // <editor-fold desc = "=== BUTTON ACTIONS ===">
     // ===================================== BUTTON ACTIONS =====================================================
     // Actions triggered by buttons
     // Add User Button
     private void addUser() {
         //OptionPane for each input - popup that pauses program and allows input
-        //showInputDialog - creates a modal dialog promts user to enter a value and returns what user typed
+        //showInputDialog - creates a modal dialog prompts user to enter a value and returns what user typed
         //Returns String input and null if cancel is pressed
         String id = JOptionPane.showInputDialog(this, "User ID:");
         //if cancel was pressed or input was left blank, exits addUser method
@@ -342,6 +385,9 @@ public class MainWindow extends JFrame {
         refreshBookings();
     }
 
+    // </editor-fold>
+    // <editor-fold desc = "=== REMOVE + CANCEL ===">
+
     //==================================== REMOVE / CANCEL METHODS =============================================
 
     private void removeUser(){
@@ -394,4 +440,5 @@ public class MainWindow extends JFrame {
         }
         refreshBookings();
     }
+    //</editor-fold>
 }

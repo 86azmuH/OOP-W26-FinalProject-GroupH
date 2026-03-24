@@ -25,7 +25,7 @@ public class Concert extends Event{
 
     @Override
     public String toString() {
-        return super.toString().replace("}", "") + ", ageRestriction=" + ageRestriction + "}";
+        return super.toString().replace("}", "") + " | ageRestriction: " + ageRestriction + " }";
     }
 
 }

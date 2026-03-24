@@ -27,7 +27,7 @@ public class Workshop extends Event{
 
     @Override
     public String toString() {
-        return super.toString().replace("}", "") + ", topic='" + topic + "'}";
+        return super.toString().replace("}", "") + " | topic: " + topic + " }";
     }
 
 

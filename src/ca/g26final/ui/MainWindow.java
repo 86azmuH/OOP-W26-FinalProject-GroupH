@@ -3,7 +3,10 @@ package ca.g26final.ui;
 
 // ===================================== IMPORTS ================================================
 import ca.g26final.model.bookings.Booking; //Model imports
-import ca.g26final.model.events.Event; 
+import ca.g26final.model.events.Concert;
+import ca.g26final.model.events.Event;
+import ca.g26final.model.events.Seminar;
+import ca.g26final.model.events.Workshop;
 import ca.g26final.model.users.Guest;
 import ca.g26final.model.users.Staff;
 import ca.g26final.model.users.Student;
@@ -14,6 +17,7 @@ import ca.g26final.service.UserService;
 import java.awt.*; //Standard Library imports
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*; //Swing UI Import
 import java.time.format.DateTimeFormatter;
@@ -21,7 +25,6 @@ import java.time.format.DateTimeFormatter;
 // </editor-fold>
 
 
-// TEST TEST DELETE AFTER
 //Creating MainWindow Class as an extension of JFrame(Top level window container)
 public class MainWindow extends JFrame {
 
@@ -146,11 +149,16 @@ public class MainWindow extends JFrame {
         JButton addButton = new JButton("Add Event");
         addButton.addActionListener(e -> addEvent());
         buttonPanel.add(addButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+
         // REMOVE EVENT
         JButton removeButton = new JButton("Cancel Event");
         removeButton.addActionListener(e -> cancelEvent());
         buttonPanel.add(removeButton);
+
+        // VIEW EVENT ROSTER
+        JButton rosterButton = new JButton("View Event Roster");
+        rosterButton.addActionListener(e-> viewRosterEvent());
+        buttonPanel.add(rosterButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         refreshEvents();
@@ -316,7 +324,7 @@ public class MainWindow extends JFrame {
             case "Staff":
                 user = new Staff(id, name, email);
                 break;
-            default:
+            default: // "Guest"
                 user = new Guest(id, name, email);
                 break;
         }
@@ -361,6 +369,53 @@ public class MainWindow extends JFrame {
             return;
         }
 
+        String[] eventTypes = {"WORKSHOP", "SEMINAR", "CONCERT"};
+
+        String selectedType = (String) JOptionPane.showInputDialog(null,
+                "Select event type:", "Add Event", JOptionPane.QUESTION_MESSAGE, null, eventTypes, eventTypes[0]);
+
+        switch (selectedType){
+            case "WORKSHOP":
+                String topic = JOptionPane.showInputDialog(this, "Topic:");
+                if(topic == null || topic.isBlank()){
+                    return;
+                }
+                Event evW = new Workshop(id, title, dt, location, cap, topic);
+                boolean okW = eventService.addEvent(evW);
+                if (okW)
+                    JOptionPane.showMessageDialog(this, "Event added");
+                else
+                    JOptionPane.showMessageDialog(this, "Failed to add event (check console)");
+                refreshEvents();
+                break;
+            case "SEMINAR":
+                String speakerName = JOptionPane.showInputDialog(this, "Speaker:");
+                if(speakerName == null || speakerName.isBlank()){
+                    return;
+                }
+                Event evS = new Seminar(id, title, dt, location, cap, speakerName);
+                boolean okS = eventService.addEvent(evS);
+                if (okS)
+                    JOptionPane.showMessageDialog(this, "Event added");
+                else
+                    JOptionPane.showMessageDialog(this, "Failed to add event (check console)");
+                refreshEvents();
+                break;
+            default: // "CONCERT"
+                String ageRes = JOptionPane.showInputDialog(this, "Age Restriction:");
+                if(ageRes == null || ageRes.isBlank()){
+                    return;
+                }
+                Event evC = new Concert(id, title, dt, location, cap, ageRes);
+                boolean okC = eventService.addEvent(evC);
+                if (okC)
+                    JOptionPane.showMessageDialog(this, "Event added");
+                else
+                    JOptionPane.showMessageDialog(this, "Failed to add event (check console)");
+                refreshEvents();
+                break;
+        }
+        /*
         // Run back-end logic to see if Event was added successfully.
         Event ev = new Event(id, title, dt, location, cap);
         boolean ok = eventService.addEvent(ev);
@@ -369,6 +424,7 @@ public class MainWindow extends JFrame {
         else
             JOptionPane.showMessageDialog(this, "Failed to add event (check console)");
         refreshEvents();
+         */
     }
 
     private void bookEvent() {
@@ -488,6 +544,46 @@ public class MainWindow extends JFrame {
             JOptionPane.showMessageDialog(this, "Failed to " +
                     "remove waitlisted booking");
         }
+    }
+
+    private void viewRosterEvent(){
+        String eventId = JOptionPane.showInputDialog(this, "Enter Event ID:");
+        if(eventId == null || eventId.isBlank()){
+            return;
+        }
+        ArrayList<Booking> roster = bookingService.getBookingsForEvent(eventId);
+
+        if (roster.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No bookings found for this event.");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Roster for Event ID: ").append(eventId).append("\n\n");
+
+        sb.append("CONFIRMED:\n");
+        for (Booking b : roster) {
+            if(b.getBookingStatus().toString().equals("CONFIRMED")){
+                sb.append(b).append("\n");
+            }
+        }
+        sb.append("\nWAITLISTED:\n");
+        for(Booking b : roster){
+            if(b.getBookingStatus().toString().equals("WAITLISTED")){
+                sb.append(b).append("/n");
+            }
+        }
+        sb.append("\nCANCELLED:\n");
+        for(Booking b : roster){
+            if(b.getBookingStatus().toString().equals("CANCELLED")){
+                sb.append(b).append("\n");
+            }
+        }
+
+        JTextArea textArea = new JTextArea(sb.toString(), 15, 40);
+        textArea.setEditable(false);
+        JOptionPane.showMessageDialog(this, new JScrollPane(textArea), "Event Roster",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
 

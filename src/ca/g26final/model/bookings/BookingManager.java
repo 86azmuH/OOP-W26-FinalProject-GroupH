@@ -3,8 +3,12 @@ package ca.g26final.model.bookings;
 import ca.g26final.model.events.Event;
 import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
+import ca.g26final.persistence.CsvUtil;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
+import java.nio.file.Path;
 
 public class BookingManager {
 
@@ -265,5 +269,56 @@ public class BookingManager {
         // Return how many bookings were changed
         return changed;
     }
+
+    // Persistence for bookings
+    // CSV: bookingId,userId,eventId,createdAtISO,status
+    public void loadFromCsv(Path path) throws Exception {
+        List<String> lines = CsvUtil.readAll(path);
+        bookings.clear();
+        int maxNum = 0;
+        for (String line : lines) {
+            String[] p = line.split(",", -1);
+            if (p.length < 5) continue;
+            String bid = p[0].trim();
+            String uid = p[1].trim();
+            String eid = p[2].trim();
+            String createdStr = p[3].trim();
+            String statusStr = p[4].trim().toUpperCase();
+
+            LocalDateTime created;
+            try { created = LocalDateTime.parse(createdStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME); }
+            catch (Exception ex) { created = LocalDateTime.now(); }
+
+            BookingStatus st;
+            try { st = BookingStatus.valueOf(statusStr); } catch (Exception ex) { st = BookingStatus.CANCELLED; }
+
+            bookings.add(new Booking(bid, uid, eid, created, st));
+
+            if (bid.startsWith("B")) {
+                try {
+                    int n = Integer.parseInt(bid.substring(1));
+                    if (n > maxNum) maxNum = n;
+                } catch (Exception ignored) {}
+            }
+        }
+        nextBookingNumber = Math.max(1, maxNum + 1);
+    }
+
+    public void updateFile(Path path) throws Exception {
+        ArrayList<String> out = new ArrayList<>();
+        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        for (Booking b : bookings) {
+            out.add(String.join(",",
+                    safe(b.getBookingId()),
+                    safe(b.getUserId()),
+                    safe(b.getEventId()),
+                    safe(b.getCreatedAt().format(fmt)),
+                    safe(b.getBookingStatus().name())
+            ));
+        }
+        CsvUtil.writeAll(path, out);
+    }
+
+    private String safe(String v) { return v == null ? "" : v.replace(","," "); }
 }
 

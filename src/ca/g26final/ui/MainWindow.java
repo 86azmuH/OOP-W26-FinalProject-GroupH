@@ -16,11 +16,11 @@ import ca.g26final.service.EventService;
 import ca.g26final.service.UserService;
 import java.awt.*; //Standard Library imports
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.List;
-import javax.swing.*; //Swing UI Import
-import java.time.format.DateTimeFormatter;
+import java.util.List; //Swing UI Import
+import javax.swing.*;
 
 // </editor-fold>
 
@@ -149,6 +149,11 @@ public class MainWindow extends JFrame {
         JButton addButton = new JButton("Add Event");
         addButton.addActionListener(e -> addEvent());
         buttonPanel.add(addButton);
+
+        // EDIT EVENT
+        JButton editButton = new JButton("Edit Event");
+        editButton.addActionListener(e -> editEvent());
+        buttonPanel.add(editButton);
 
         // REMOVE EVENT
         JButton removeButton = new JButton("Cancel Event");
@@ -586,10 +591,64 @@ public class MainWindow extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
+    // Edit Event button
+    private void editEvent(){
+        String id = JOptionPane.showInputDialog(this, "Enter Event ID to edit:");
+        if (id == null || id.isBlank())
+            return;
 
+        Event event = eventService.getEventById(id);
+        if (event == null) {
+            JOptionPane.showMessageDialog(this, "Event not found");
+            return;
+        }
 
-    // </editor-fold>
-    // <editor-fold desc = "=== REMOVE + CANCEL ===">
+        // Show current details
+        String currentDetails = "Current Event Details:\n" +
+                "ID: " + event.getEventId() + "\n" +
+                "Title: " + event.getTitle() + "\n" +
+                "Date/Time: " + event.getDateTime() + "\n" +
+                "Location: " + event.getLocation() + "\n" +
+                "Capacity: " + event.getCapacity() + "\n" +
+                "Type: " + event.getClass().getSimpleName();
+        JOptionPane.showMessageDialog(this, currentDetails);
+
+        // Prompt for new values
+        String newTitle = JOptionPane.showInputDialog(this, "New Title:", event.getTitle());
+        if (newTitle == null) return; // Cancel
+
+        String dtStr = JOptionPane.showInputDialog(this, "New Date/time (YYYY-MM-DDTHH:MM):", event.getDateTime().toString());
+        if (dtStr == null) return;
+        LocalDateTime newDt;
+        try {
+            newDt = LocalDateTime.parse(dtStr);
+        } catch (DateTimeParseException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid date time format");
+            return;
+        }
+
+        String newLocation = JOptionPane.showInputDialog(this, "New Location:", event.getLocation());
+        if (newLocation == null) return;
+
+        String capStr = JOptionPane.showInputDialog(this, "New Capacity:", String.valueOf(event.getCapacity()));
+        if (capStr == null) return;
+        int newCap;
+        try {
+            newCap = Integer.parseInt(capStr);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Capacity must be a number");
+            return;
+        }
+
+        // Update the event
+        boolean ok = eventService.updateEvent(id, newTitle, newDt, newLocation, newCap);
+        if (ok) {
+            JOptionPane.showMessageDialog(this, "Event updated successfully");
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update event (check console)");
+        }
+        refreshEvents();
+    }
 
     //==================================== REMOVE / CANCEL METHODS =============================================
 

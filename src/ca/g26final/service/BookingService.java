@@ -5,7 +5,9 @@ import ca.g26final.model.bookings.BookingManager;
 import ca.g26final.model.events.Event;
 import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
+import ca.g26final.persistence.CsvUtil;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class BookingService {
@@ -13,12 +15,14 @@ public class BookingService {
     private UserService userService;
     private EventService eventService;
     private BookingManager bookingManager;
+    private final Path bookingsCsvPath;
 
     // constructor for booking service
     public BookingService(UserService userService, EventService eventService) {
         this.userService = userService;
         this.eventService = eventService;
         this.bookingManager = new BookingManager();
+        this.bookingsCsvPath = CsvUtil.resolveDataPath("bookings.csv");
     }
 
     // Books an event using IDs (returns Booking or null if failed)
@@ -55,13 +59,19 @@ public class BookingService {
         }
 
         // BookingManager does all booking rules. It returns null if it fails.
-        return bookingManager.createBooking(user, event);
+        Booking b = bookingManager.createBooking(user, event);
+        if (b != null) {
+            try { updateFile(); } catch (Exception ignored) {}
+        }
+        return b;
     }
 
     // Cancels a booking with a bookingId. Returns true if cancelled or already
     // cancelled, false otherwise.
     public boolean cancelBooking(String bookingId) {
-        return bookingManager.cancelBooking(bookingId);
+        boolean ok = bookingManager.cancelBooking(bookingId);
+        if (ok) { try { updateFile(); } catch (Exception ignored) {} }
+        return ok;
     }
 
     // Returns all bookings for a user
@@ -106,6 +116,7 @@ public class BookingService {
 
         // Optional message for debugging
         System.out.println("[BookingService] Event cancelled. Bookings cancelled: " + cancelledCount);
+        try { updateFile(); } catch (Exception ignored) {}
 
         return true;
     }
@@ -164,10 +175,20 @@ public class BookingService {
         }
 
         if (target != null) {
-            return cancelBooking(bookingId);
+            boolean ok = cancelBooking(bookingId);
+            return ok;
         }
 
         return false;
+    }
+
+    // Persistence wrappers
+    public void loadFromCsv() throws Exception {
+        bookingManager.loadFromCsv(bookingsCsvPath);
+    }
+
+    public void updateFile() throws Exception {
+        bookingManager.updateFile(bookingsCsvPath);
     }
 
 }

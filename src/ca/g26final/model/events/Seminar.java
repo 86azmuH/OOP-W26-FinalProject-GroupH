@@ -25,6 +25,6 @@ public class Seminar extends Event{
 
     @Override
     public String toString() {
-        return super.toString().replace("}", "") + ", speakerName='" + speakerName + "'}";
+        return super.toString().replace("}", "") + "| speakerName: " + speakerName + " }";
     }
 }

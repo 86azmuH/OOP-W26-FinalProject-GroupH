@@ -90,6 +90,12 @@ public class Event {
         return status;
     }
 
+
+    //returns Event Type
+    public String getEventType() {
+        return getClass().getSimpleName();
+    }
+
     //Sets Event Title
     public void setTitle(String title) {
         if (title == null || title.isBlank()) {

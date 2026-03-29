@@ -210,4 +210,72 @@ public class EventService {
         try { return LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME); }
         catch (Exception ex) { return LocalDateTime.now(); }
     }
+
+    public List<Event> searchByTitle(String keyword)
+    {
+        //List to store matching events
+        List<Event> results = new ArrayList<>();
+
+        //Checks all events
+        for (Event event : events) {
+            //If empty, its like show all
+            if (keyword == null || keyword.trim().isEmpty()) {
+                results.add(event);
+
+                //Checks if event title has the keyword
+            } else if (event.getTitle().toLowerCase().contains(keyword.toLowerCase())) {
+                results.add(event);
+            }
+        }
+
+        //returns list of matching events
+        return results;
+
+    }
+
+    public List<Event> searchByType(String type)
+    {
+        //New List to store
+        List<Event> results = new ArrayList<>();
+
+        //Checks all events
+        for (Event event : events) {
+            //Checks if empty, if so, shows all
+            if (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) {
+                results.add(event);
+                //Checks for a match in event type
+            } else if (event.getClass().getSimpleName().equalsIgnoreCase(type)) {
+                results.add(event);
+            }
+        }
+
+        //Returns matches
+        return results;
+    }
+
+    public List<Event> searchAndFilter(String keyword, String type)
+    {
+        //New list
+        List<Event> results = new ArrayList<>();
+
+        //Checks all events
+        for (Event event : events) {
+            //Becomes true if title matches keyword
+            boolean matchesTitle = (keyword == null || keyword.trim().isEmpty()) ||
+                    event.getTitle().toLowerCase().contains(keyword.toLowerCase());
+
+            //Becomes true if type matches the chosen type
+            boolean matchesType = (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) ||
+                    event.getClass().getSimpleName().equalsIgnoreCase(type);
+
+            //Adds to event ONLY if both are true(both matches)
+            if (matchesTitle && matchesType) {
+                results.add(event);
+            }
+        }
+
+        //Returns the final list
+        return results;
+    }
+
 }

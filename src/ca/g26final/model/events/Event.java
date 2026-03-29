@@ -139,14 +139,14 @@ public class Event {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "{" +
-                "eventId='" + eventID + '\'' +
-                ", title='" + title + '\'' +
-                ", dateTime=" + dateTime +
-                ", location='" + location + '\'' +
-                ", capacity=" + capacity +
-                ", status=" + status +
-                '}';
+        return getClass().getSimpleName() + " { " +
+                "eventId: " + eventID +
+                "| title: " + title +
+                "| dateTime: " + dateTime +
+                "| location: " + location +
+                "| capacity: " + capacity +
+                "| status: " + status +
+                " }";
     }
 
 

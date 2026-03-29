@@ -3,8 +3,11 @@ package ca.g26final.service;
 import ca.g26final.model.bookings.Booking;
 import ca.g26final.model.bookings.BookingManager;
 import ca.g26final.model.events.Event;
+import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
+import ca.g26final.persistence.CsvUtil;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class BookingService {
@@ -12,12 +15,14 @@ public class BookingService {
     private UserService userService;
     private EventService eventService;
     private BookingManager bookingManager;
+    private final Path bookingsCsvPath;
 
     // constructor for booking service
     public BookingService(UserService userService, EventService eventService) {
         this.userService = userService;
         this.eventService = eventService;
         this.bookingManager = new BookingManager();
+        this.bookingsCsvPath = CsvUtil.resolveDataPath("bookings.csv");
     }
 
     // Books an event using IDs (returns Booking or null if failed)
@@ -48,14 +53,25 @@ public class BookingService {
             return null;
         }
 
+        if(event.getStatus() == EventStatus.CANCELLED){
+            System.out.println("[BookingService] bookEvent failed: event is cancelled");
+            return null;
+        }
+
         // BookingManager does all booking rules. It returns null if it fails.
-        return bookingManager.createBooking(user, event);
+        Booking b = bookingManager.createBooking(user, event);
+        if (b != null) {
+            try { updateFile(); } catch (Exception ignored) {}
+        }
+        return b;
     }
 
     // Cancels a booking with a bookingId. Returns true if cancelled or already
     // cancelled, false otherwise.
     public boolean cancelBooking(String bookingId) {
-        return bookingManager.cancelBooking(bookingId);
+        boolean ok = bookingManager.cancelBooking(bookingId);
+        if (ok) { try { updateFile(); } catch (Exception ignored) {} }
+        return ok;
     }
 
     // Returns all bookings for a user
@@ -100,6 +116,7 @@ public class BookingService {
 
         // Optional message for debugging
         System.out.println("[BookingService] Event cancelled. Bookings cancelled: " + cancelledCount);
+        try { updateFile(); } catch (Exception ignored) {}
 
         return true;
     }
@@ -108,6 +125,70 @@ public class BookingService {
     // expose all bookings for UI purposes
     public ArrayList<Booking> getAllBookings() {
         return bookingManager.getAllBookings();
+    }
+
+
+    // Check for User Booking
+    public boolean hasBookingsForUser(String userId) {
+        if (userId == null || userId.isBlank()) {
+            return false;
+        }
+
+        for (Booking b : getAllBookings()) {
+            if (b.getUserId().equals(userId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Check for Event Booking
+    public boolean hasBookingsForEvent(String eventId) {
+        if (eventId == null || eventId.isBlank()) {
+            return false;
+        }
+
+        for (Booking b : getAllBookings()) {
+            if (b.getEventId().equals(eventId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public int cancelBookingsForEvent(String eventId) {
+        return bookingManager.cancelAllBookingsForEventNoPromotion(eventId);
+    }
+    // Kayden changed this to be safer (avoid iterating while looping)
+    // Make sure you understand
+    public boolean removeWaitlistedBooking(String bookingId) {
+        Booking target = null;
+
+        for (Booking b : bookingManager.getAllBookings()) {
+            if (b.getBookingId().equalsIgnoreCase(bookingId)
+                    && b.toString().contains("WAITLISTED")) {
+                target = b;
+                break;
+            }
+        }
+
+        if (target != null) {
+            boolean ok = cancelBooking(bookingId);
+            return ok;
+        }
+
+        return false;
+    }
+
+    // Persistence wrappers
+    public void loadFromCsv() throws Exception {
+        bookingManager.loadFromCsv(bookingsCsvPath);
+    }
+
+    public void updateFile() throws Exception {
+        bookingManager.updateFile(bookingsCsvPath);
     }
 
 }

@@ -15,6 +15,15 @@ public class App {
         EventService eventService = new EventService();
         BookingService bookingService = new BookingService(userService, eventService);
 
+        // Load persisted data (order matters: users -> events -> bookings)
+        try {
+            userService.loadFromCsv();
+            eventService.loadFromCsv();
+            bookingService.loadFromCsv();
+        } catch (Exception ex) {
+            System.out.println("[App] Warning: Failed to load persisted data: " + ex.getMessage());
+        }
+
         // This tells the GUI to run the code on the correct Thread as swing is not thread safe.
         // Therefore, we must tell it to run on the EDT Event Dispatch Thread.
         SwingUtilities.invokeLater(() -> {

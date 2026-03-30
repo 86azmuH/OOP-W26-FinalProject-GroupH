@@ -69,19 +69,20 @@ public class BookingManager {
         // Count how many confirmed bookings this user already has
         int confirmedForUser = countConfirmedBookingsForUser(user.getUserId());
 
-        // If the user reached their limit, do not allow another confirmed booking
-        if (confirmedForUser >= user.getMaxConfirmedBookings()) {
-            System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
-            return null;
-        }
-
         BookingStatus status;
 
-        // If the event still has space, the booking is confirmed
+        // If the event still has space, check whether the user can take a confirmed spot
         if (countConfirmedBookingsForEvent(event.getEventId()) < event.getCapacity()) {
+            // Only block if the user has already reached their confirmed-booking limit;
+            // this check only applies when a confirmed spot would actually be assigned
+            if (confirmedForUser >= user.getMaxConfirmedBookings()) {
+                System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
+                return null;
+            }
             status = BookingStatus.CONFIRMED;
         }
-        // If the event is full, the booking goes on the waitlist
+        // If the event is full, place the user on the waitlist regardless of confirmed limit;
+        // being waitlisted does not consume a confirmed booking slot
         else {
             status = BookingStatus.WAITLISTED;
         }

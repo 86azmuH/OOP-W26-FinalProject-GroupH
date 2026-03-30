@@ -755,10 +755,23 @@ public class MainWindow extends JFrame {
 
             // If capacity was increased, auto-promote waitlisted bookings into new spots.
             if (newCap > oldCapacity) {
+                // Snapshot FIFO waitlist order before promotion so we can report exactly
+                // which bookings were promoted to confirmed.
+                List<Booking> waitlistBeforePromotion = bookingService.getWaitlist(id);
                 int promoted = bookingService.promoteWaitlistToCapacity(id);
                 if (promoted > 0) {
                     message.append("\nAutomatic promotions: ").append(promoted)
                             .append(" waitlisted booking(s) moved to CONFIRMED.");
+
+                    int maxToShow = Math.min(promoted, waitlistBeforePromotion.size());
+                    for (int i = 0; i < maxToShow; i++) {
+                        Booking promotedBooking = waitlistBeforePromotion.get(i);
+                        message.append("\n - ")
+                                .append(promotedBooking.getBookingId())
+                                .append(" (User ")
+                                .append(promotedBooking.getUserId())
+                                .append(")");
+                    }
                 }
             }
 

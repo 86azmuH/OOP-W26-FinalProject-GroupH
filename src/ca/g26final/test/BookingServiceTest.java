@@ -1,4 +1,4 @@
-package ca.g26final;
+package ca.g26final.test;
 
 import ca.g26final.model.bookings.Booking;
 import ca.g26final.model.bookings.BookingStatus;

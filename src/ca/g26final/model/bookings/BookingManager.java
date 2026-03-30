@@ -7,6 +7,7 @@ import ca.g26final.persistence.CsvUtil;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.nio.file.Path;
 
@@ -59,7 +60,8 @@ public class BookingManager {
             if (b.getUserId().equals(user.getUserId())
                     && b.getEventId().equals(event.getEventId())
                     && b.isActive()) {
-                System.out.println("[BookingManager] createBooking failed: duplicate active booking (user already booked this event)");
+                System.out.println(
+                        "[BookingManager] createBooking failed: duplicate active booking (user already booked this event)");
                 return null;
             }
         }
@@ -67,19 +69,22 @@ public class BookingManager {
         // Count how many confirmed bookings this user already has
         int confirmedForUser = countConfirmedBookingsForUser(user.getUserId());
 
-        // If the user reached their limit, do not allow another confirmed booking
-        if (confirmedForUser >= user.getMaxConfirmedBookings()) {
-            System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
-            return null;
-        }
-
         BookingStatus status;
 
-        // If the event still has space, the booking is confirmed
+        // If the event still has space, check whether the user can take a confirmed
+        // spot
         if (countConfirmedBookingsForEvent(event.getEventId()) < event.getCapacity()) {
+            // Only block if the user has already reached their confirmed-booking limit;
+            // this check only applies when a confirmed spot would actually be assigned
+            if (confirmedForUser >= user.getMaxConfirmedBookings()) {
+                System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
+                return null;
+            }
             status = BookingStatus.CONFIRMED;
         }
-        // If the event is full, the booking goes on the waitlist
+        // If the event is full, place the user on the waitlist regardless of confirmed
+        // limit;
+        // being waitlisted does not consume a confirmed booking slot
         else {
             status = BookingStatus.WAITLISTED;
         }
@@ -90,8 +95,7 @@ public class BookingManager {
                 user.getUserId(),
                 event.getEventId(),
                 LocalDateTime.now(),
-                status
-        );
+                status);
 
         // Add the new booking to the list
         bookings.add(booking);
@@ -139,13 +143,10 @@ public class BookingManager {
     // Finds the first waitlisted booking for an event
     // and changes it to confirmed
     private void promoteFirstWaitlistedBooking(String eventId) {
-        for (Booking booking : bookings) {
-            if (booking.getEventId().equals(eventId)
-                    && booking.getBookingStatus() == BookingStatus.WAITLISTED) {
-                booking.setBookingStatus(BookingStatus.CONFIRMED);
-                System.out.println("Promoted from waitlist: " + booking.getBookingId());
-                return;
-            }
+        Booking earliest = getEarliestWaitlistedBooking(eventId);
+        if (earliest != null) {
+            earliest.setBookingStatus(BookingStatus.CONFIRMED);
+            System.out.println("Promoted from waitlist: " + earliest.getBookingId());
         }
     }
 
@@ -154,7 +155,8 @@ public class BookingManager {
         ArrayList<Booking> result = new ArrayList<>();
 
         // If userId is invalid, return an empty list
-        if (userId == null || userId.isBlank()) return result;
+        if (userId == null || userId.isBlank())
+            return result;
 
         // Add all bookings that belong to this user
         for (Booking booking : bookings) {
@@ -207,7 +209,53 @@ public class BookingManager {
             }
         }
 
+        // First-come, first-served waitlist ordering.
+        result.sort(Comparator
+                .comparing(Booking::getCreatedAt)
+                .thenComparing(Booking::getBookingId));
+
         return result;
+    }
+
+    private Booking getEarliestWaitlistedBooking(String eventId) {
+        Booking earliest = null;
+        for (Booking booking : bookings) {
+            // Only compare waitlisted bookings for the requested event.
+            if (!booking.getEventId().equals(eventId)
+                    || booking.getBookingStatus() != BookingStatus.WAITLISTED) {
+                continue;
+            }
+
+            // Pick oldest createdAt; break ties with bookingId for deterministic behavior.
+            if (earliest == null
+                    || booking.getCreatedAt().isBefore(earliest.getCreatedAt())
+                    || (booking.getCreatedAt().equals(earliest.getCreatedAt())
+                            && booking.getBookingId().compareTo(earliest.getBookingId()) < 0)) {
+                earliest = booking;
+            }
+        }
+        return earliest;
+    }
+
+    // Fills newly available confirmed spots from the waitlist in FIFO order.
+    public int promoteWaitlistedBookingsToCapacity(String eventId, int capacity) {
+        if (eventId == null || eventId.isBlank() || capacity <= 0) {
+            return 0;
+        }
+
+        int promoted = 0;
+        while (countConfirmedBookingsForEvent(eventId) < capacity) {
+            Booking earliest = getEarliestWaitlistedBooking(eventId);
+            if (earliest == null) {
+                break;
+            }
+
+            earliest.setBookingStatus(BookingStatus.CONFIRMED);
+            promoted++;
+            System.out.println("Promoted from waitlist: " + earliest.getBookingId());
+        }
+
+        return promoted;
     }
 
     // Counts how many confirmed bookings an event has
@@ -278,7 +326,14 @@ public class BookingManager {
         int maxNum = 0;
         for (String line : lines) {
             String[] p = line.split(",", -1);
-            if (p.length < 5) continue;
+            if (p.length < 5)
+                continue;
+
+            // Skip header rows
+            if (p[0].trim().equalsIgnoreCase("bookingId")) {
+                continue;
+            }
+
             String bid = p[0].trim();
             String uid = p[1].trim();
             String eid = p[2].trim();
@@ -286,19 +341,32 @@ public class BookingManager {
             String statusStr = p[4].trim().toUpperCase();
 
             LocalDateTime created;
-            try { created = LocalDateTime.parse(createdStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME); }
-            catch (Exception ex) { created = LocalDateTime.now(); }
+            try {
+                created = LocalDateTime.parse(createdStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (Exception ex) {
+                try {
+                    created = LocalDateTime.parse(createdStr, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+                } catch (Exception ignored) {
+                    created = LocalDateTime.now();
+                }
+            }
 
             BookingStatus st;
-            try { st = BookingStatus.valueOf(statusStr); } catch (Exception ex) { st = BookingStatus.CANCELLED; }
+            try {
+                st = BookingStatus.valueOf(statusStr);
+            } catch (Exception ex) {
+                st = BookingStatus.CANCELLED;
+            }
 
             bookings.add(new Booking(bid, uid, eid, created, st));
 
             if (bid.startsWith("B")) {
                 try {
                     int n = Integer.parseInt(bid.substring(1));
-                    if (n > maxNum) maxNum = n;
-                } catch (Exception ignored) {}
+                    if (n > maxNum)
+                        maxNum = n;
+                } catch (Exception ignored) {
+                }
             }
         }
         nextBookingNumber = Math.max(1, maxNum + 1);
@@ -306,19 +374,37 @@ public class BookingManager {
 
     public void updateFile(Path path) throws Exception {
         ArrayList<String> out = new ArrayList<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        // Keep CSV output aligned with assignment starter schema.
+        out.add("bookingId,userId,eventId,createdAt,bookingStatus");
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         for (Booking b : bookings) {
+            String status = toTitleCaseStatus(b.getBookingStatus());
             out.add(String.join(",",
                     safe(b.getBookingId()),
                     safe(b.getUserId()),
                     safe(b.getEventId()),
                     safe(b.getCreatedAt().format(fmt)),
-                    safe(b.getBookingStatus().name())
-            ));
+                    safe(status)));
         }
         CsvUtil.writeAll(path, out);
     }
 
-    private String safe(String v) { return v == null ? "" : v.replace(","," "); }
-}
+    private String safe(String v) {
+        return v == null ? "" : v.replace(",", " ");
+    }
 
+    private String toTitleCaseStatus(BookingStatus status) {
+        if (status == null)
+            return "Cancelled";
+        switch (status) {
+            case CONFIRMED:
+                return "Confirmed";
+            case WAITLISTED:
+                return "Waitlisted";
+            default:
+                return "Cancelled";
+        }
+    }
+}

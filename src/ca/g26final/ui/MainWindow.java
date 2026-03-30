@@ -3,6 +3,7 @@ package ca.g26final.ui;
 
 // ===================================== IMPORTS ================================================
 import ca.g26final.model.bookings.Booking; //Model imports
+import ca.g26final.model.bookings.BookingStatus;
 import ca.g26final.model.events.Concert;
 import ca.g26final.model.events.Event;
 import ca.g26final.model.events.Seminar;
@@ -24,92 +25,98 @@ import javax.swing.*;
 
 // </editor-fold>
 
-
 //Creating MainWindow Class as an extension of JFrame(Top level window container)
 public class MainWindow extends JFrame {
 
-    // ===================================== FIELDS  =====================================================
-    //Service Fields - allows buttons to call service functions etc
+    // ===================================== FIELDS
+    // =====================================================
+    // Service Fields - allows buttons to call service functions etc
     private UserService userService;
     private EventService eventService;
     private BookingService bookingService;
 
-    //UI text areas that display current users, events, and bookings
-    //Must be fields as they are updated whenever the state chhanges
+    // UI text areas that display current users, events, and bookings
+    // Must be fields as they are updated whenever the state chhanges
     private JTextArea usersTextArea;
     private JTextArea eventsTextArea;
     private JTextArea bookingsTextArea;
     private JTextArea waitlistTextArea;
 
-    //  // ===================================== MAIN WINDOW CONSTRUCTOR  =================================
+    // // ===================================== MAIN WINDOW CONSTRUCTOR
+    // =================================
     public MainWindow(UserService userService, EventService eventService, BookingService bookingService) {
-        //setting the fields
+        // setting the fields
         this.userService = userService;
         this.eventService = eventService;
         this.bookingService = bookingService;
 
-        //Giving the frame a title and setting size,height and exit on close
+        // Giving the frame a title and setting size,height and exit on close
         setTitle("Campus Event Booking System");
-        setSize(600, 400);
+        setSize(900, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        //Creating a tabbedPane - allows us to have tabs for each service
+        // Creating a tabbedPane - allows us to have tabs for each service
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        //Adding all our tabs to the tabbedPane
-        //Users Tab - Given title and called using createUsersPanel method
+        // Adding all our tabs to the tabbedPane
+        // Users Tab - Given title and called using createUsersPanel method
         tabbedPane.addTab("Users", createUsersPanel());
 
-        //Events Tab
+        // Events Tab
         tabbedPane.addTab("Events", createEventsPanel());
 
-        //Bookings Tab
+        // Bookings Tab
         tabbedPane.addTab("Bookings", createBookingsPanel());
 
-        //Waitlist Tab
+        // Waitlist Tab
         tabbedPane.addTab("Waitlist", createWaitlistPanel());
 
-        //adding the tabbedPane to the MainWindow Frame - JFrame uses BorderLayout by default
+        // adding the tabbedPane to the MainWindow Frame - JFrame uses BorderLayout by
+        // default
         add(tabbedPane);
-        //Adds to Center region, equivelent to add(tabbedPane, BorderLayout.CENTER);
+        // Adds to Center region, equivelent to add(tabbedPane, BorderLayout.CENTER);
     }
+
     // <editor-fold desc = "=== PANELS ===">
-    // ===================================== CREATING PANEL METHODS  =====================================================
-    //Method that creates the Users Panel - returns a JPanel
-    //Only used inside MainWindow -> Private
+    // ===================================== CREATING PANEL METHODS
+    // =====================================================
+    // Method that creates the Users Panel - returns a JPanel
+    // Only used inside MainWindow -> Private
     private JPanel createUsersPanel() {
-        //Creating the panel wth a BorderLayout
+        // Creating the panel wth a BorderLayout
         JPanel panel = new JPanel(new BorderLayout());
-        //Adds Padding
+        // Adds Padding
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        //Giving it a title Label
+        // Giving it a title Label
         JLabel label = new JLabel("Users Management");
         label.setFont(new Font("Arial", Font.BOLD, 16));
-        //Adding the title label to the North region
+        // Adding the title label to the North region
         panel.add(label, BorderLayout.NORTH);
 
-        //Creating a text Area to hold users
+        // Creating a text Area to hold users
         usersTextArea = new JTextArea();
-        //Making it un-editable
+        // Making it un-editable
         usersTextArea.setEditable(false);
-        //Creating a ScrollPane for textArea
+        // Creating a ScrollPane for textArea
         JScrollPane scrollPane = new JScrollPane(usersTextArea);
-        //adding the scrollPane containing the TextArea to the center region of the users panel
+        // adding the scrollPane containing the TextArea to the center region of the
+        // users panel
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        //ADD USER
-        //Creating a panel for the button
+        // ADD USER
+        // Creating a panel for the button
         JPanel buttonPanel = new JPanel();
-        //Creating a button to add Users
+        // Creating a button to add Users
         JButton addButton = new JButton("Add User");
-        //Adding an ActionListener to the button allowing the method addUser() to be executed on press
+        // Adding an ActionListener to the button allowing the method addUser() to be
+        // executed on press
         addButton.addActionListener(e -> addUser());
-        //adding the JButton to the buttonPanel
+        // adding the JButton to the buttonPanel
         buttonPanel.add(addButton);
 
-        //REMOVE USER
+        // REMOVE USER
         JButton removeButton = new JButton("Remove User");
         removeButton.addActionListener(e -> removeUser());
         buttonPanel.add(removeButton);
@@ -119,14 +126,13 @@ public class MainWindow extends JFrame {
         detailsButton.addActionListener(e -> viewUserDetails());
         buttonPanel.add(detailsButton);
 
-        //Adds panel to display buttons at south region
+        // Adds panel to display buttons at south region
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
-
-        //Refreshes the Users textArea
+        // Refreshes the Users textArea
         refreshUsers();
-        //Call refreshUsers to display nousers for now 
-        //and for When we add persistence, we want it to display the data from files
+        // Call refreshUsers to display nousers for now
+        // and for When we add persistence, we want it to display the data from files
         return panel;
     }
 
@@ -162,8 +168,24 @@ public class MainWindow extends JFrame {
 
         // VIEW EVENT ROSTER
         JButton rosterButton = new JButton("View Event Roster");
-        rosterButton.addActionListener(e-> viewRosterEvent());
+        rosterButton.addActionListener(e -> viewRosterEvent());
         buttonPanel.add(rosterButton);
+
+        // SEARCH BY TITLE
+        JButton searchTitleButton = new JButton("Search Title");
+        searchTitleButton.addActionListener(e -> searchEventsByTitle());
+        buttonPanel.add(searchTitleButton);
+
+        // FILTER BY TYPE
+        JButton filterTypeButton = new JButton("Filter Type");
+        filterTypeButton.addActionListener(e -> filterEventsByType());
+        buttonPanel.add(filterTypeButton);
+
+        // RESET VIEW
+        JButton showAllButton = new JButton("Show All");
+        showAllButton.addActionListener(e -> refreshEvents());
+        buttonPanel.add(showAllButton);
+
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         refreshEvents();
@@ -200,9 +222,9 @@ public class MainWindow extends JFrame {
     }
 
     // Waitlist Panel
-    private JPanel createWaitlistPanel(){
+    private JPanel createWaitlistPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel label = new JLabel("Waitlist Management");
         label.setFont(new Font("Arial", Font.BOLD, 16));
@@ -220,7 +242,7 @@ public class MainWindow extends JFrame {
         buttonPanel.add(viewButton);
 
         JButton removeButton = new JButton("Remove Waitlisted Booking");
-        removeButton.addActionListener(e-> removeWaitlist());
+        removeButton.addActionListener(e -> removeWaitlist());
         buttonPanel.add(removeButton);
 
         panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -231,31 +253,35 @@ public class MainWindow extends JFrame {
 
     // </editor-fold>
     // <editor-fold desc = "=== REFRESH ===">
-    // ===================================== REFRESH METHODS  =====================================================
-    //refresh helpers - functions to refresh the textAreas if changes are made.
-    //If the data is changed in any of the service objects, need to update whats displayed in the textAreas
+    // ===================================== REFRESH METHODS
+    // =====================================================
+    // refresh helpers - functions to refresh the textAreas if changes are made.
+    // If the data is changed in any of the service objects, need to update whats
+    // displayed in the textAreas
 
     private void refreshUsers() {
-        //Creates List of Users and pulls them from userService object
+        // Creates List of Users and pulls them from userService object
         List<User> users = userService.getAllUsers();
-        //Sets text to no users if the list of users is empty
+        // Sets text to no users if the list of users is empty
         if (users.isEmpty()) {
             usersTextArea.setText("<no users>");
         } else {
-            //StringBuilder is used to build one big string efficiently instead of doing text+= repeatedly
-            //creats StringBuilder object
+            // StringBuilder is used to build one big string efficiently instead of doing
+            // text+= repeatedly
+            // creats StringBuilder object
             StringBuilder sb = new StringBuilder();
-            //Iterates through the list and adds the data from each user to the StringBuilder using the toString, 
-            //also adds a \n character to display each user line by line
+            // Iterates through the list and adds the data from each user to the
+            // StringBuilder using the toString,
+            // also adds a \n character to display each user line by line
             for (User u : users) {
                 sb.append(u.toString()).append("\n");
             }
-            //Sets the text in the TextArea to the stringBuilder using the toString
+            // Sets the text in the TextArea to the stringBuilder using the toString
             usersTextArea.setText(sb.toString());
         }
     }
 
-    //Same thing for events
+    // Same thing for events
     private void refreshEvents() {
         List<Event> events = eventService.getAllEvents();
         if (events.isEmpty()) {
@@ -269,7 +295,21 @@ public class MainWindow extends JFrame {
         }
     }
 
-    //Same thing for bookings
+    // Writes a list of events to the Events tab using a custom empty-state message.
+    private void showEvents(List<Event> events, String emptyMessage) {
+        if (events.isEmpty()) {
+            eventsTextArea.setText(emptyMessage);
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Event event : events) {
+            sb.append(event.toString()).append("\n");
+        }
+        eventsTextArea.setText(sb.toString());
+    }
+
+    // Same thing for bookings
     private void refreshBookings() {
         List<Booking> bookings = bookingService.getAllBookings();
         if (bookings.isEmpty()) {
@@ -285,15 +325,17 @@ public class MainWindow extends JFrame {
 
     // </editor-fold>
     // <editor-fold desc = "=== BUTTON ACTIONS ===">
-    // ===================================== BUTTON ACTIONS =====================================================
+    // ===================================== BUTTON ACTIONS
+    // =====================================================
     // Actions triggered by buttons
     // Add User Button
     private void addUser() {
-        //OptionPane for each input - popup that pauses program and allows input
-        //showInputDialog - creates a modal dialog prompts user to enter a value and returns what user typed
-        //Returns String input and null if cancel is pressed
+        // OptionPane for each input - popup that pauses program and allows input
+        // showInputDialog - creates a modal dialog prompts user to enter a value and
+        // returns what user typed
+        // Returns String input and null if cancel is pressed
         String id = JOptionPane.showInputDialog(this, "User ID:");
-        //if cancel was pressed or input was left blank, exits addUser method
+        // if cancel was pressed or input was left blank, exits addUser method
         if (id == null || id.isBlank())
             return;
         String name = JOptionPane.showInputDialog(this, "Name:");
@@ -303,12 +345,12 @@ public class MainWindow extends JFrame {
         if (email == null)
             return;
 
-        //This Section uses an overloaded version of JOptionPane.showInputDialog
-        //It replaces the normal text field with a dropdown list.
-        //Lets user choose from predefined options
-        //List of options
+        // This Section uses an overloaded version of JOptionPane.showInputDialog
+        // It replaces the normal text field with a dropdown list.
+        // Lets user choose from predefined options
+        // List of options
         String[] types = { "Student", "Staff", "Guest" };
-        
+
         String type = (String) JOptionPane.showInputDialog(
                 this,
                 "Type:",
@@ -320,7 +362,7 @@ public class MainWindow extends JFrame {
         if (type == null)
             return;
 
-        //Initialize the correct constructor based on input
+        // Initialize the correct constructor based on input
         User user;
         switch (type) {
             case "Student":
@@ -341,6 +383,7 @@ public class MainWindow extends JFrame {
             JOptionPane.showMessageDialog(this, "Failed to add user (check console for details)");
         refreshUsers();
     }
+
     // Add Event Button
     private void addEvent() {
         // Input Prompts that are stored to the respective variables.
@@ -374,15 +417,15 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        String[] eventTypes = {"WORKSHOP", "SEMINAR", "CONCERT"};
+        String[] eventTypes = { "WORKSHOP", "SEMINAR", "CONCERT" };
 
         String selectedType = (String) JOptionPane.showInputDialog(null,
                 "Select event type:", "Add Event", JOptionPane.QUESTION_MESSAGE, null, eventTypes, eventTypes[0]);
 
-        switch (selectedType){
+        switch (selectedType) {
             case "WORKSHOP":
                 String topic = JOptionPane.showInputDialog(this, "Topic:");
-                if(topic == null || topic.isBlank()){
+                if (topic == null || topic.isBlank()) {
                     return;
                 }
                 Event evW = new Workshop(id, title, dt, location, cap, topic);
@@ -395,7 +438,7 @@ public class MainWindow extends JFrame {
                 break;
             case "SEMINAR":
                 String speakerName = JOptionPane.showInputDialog(this, "Speaker:");
-                if(speakerName == null || speakerName.isBlank()){
+                if (speakerName == null || speakerName.isBlank()) {
                     return;
                 }
                 Event evS = new Seminar(id, title, dt, location, cap, speakerName);
@@ -408,7 +451,7 @@ public class MainWindow extends JFrame {
                 break;
             default: // "CONCERT"
                 String ageRes = JOptionPane.showInputDialog(this, "Age Restriction:");
-                if(ageRes == null || ageRes.isBlank()){
+                if (ageRes == null || ageRes.isBlank()) {
                     return;
                 }
                 Event evC = new Concert(id, title, dt, location, cap, ageRes);
@@ -421,14 +464,14 @@ public class MainWindow extends JFrame {
                 break;
         }
         /*
-        // Run back-end logic to see if Event was added successfully.
-        Event ev = new Event(id, title, dt, location, cap);
-        boolean ok = eventService.addEvent(ev);
-        if (ok)
-            JOptionPane.showMessageDialog(this, "Event added");
-        else
-            JOptionPane.showMessageDialog(this, "Failed to add event (check console)");
-        refreshEvents();
+         * // Run back-end logic to see if Event was added successfully.
+         * Event ev = new Event(id, title, dt, location, cap);
+         * boolean ok = eventService.addEvent(ev);
+         * if (ok)
+         * JOptionPane.showMessageDialog(this, "Event added");
+         * else
+         * JOptionPane.showMessageDialog(this, "Failed to add event (check console)");
+         * refreshEvents();
          */
     }
 
@@ -467,14 +510,14 @@ public class MainWindow extends JFrame {
             }
         }
 
-        // If nothing is set to foundUser then it could not locate it in the previous loop.
+        // If nothing is set to foundUser then it could not locate it in the previous
+        // loop.
         if (foundUser == null) {
             JOptionPane.showMessageDialog(this, "User not found");
             return;
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
 
         // Building the display for the found user
         StringBuilder sb = new StringBuilder();
@@ -509,15 +552,15 @@ public class MainWindow extends JFrame {
     }
 
     // Waitlist Buttons
-    private void viewWaitlist(){
+    private void viewWaitlist() {
         String eventId = JOptionPane.showInputDialog(this, "Enter Event ID:");
-        if(eventId == null || eventId.isBlank()){
+        if (eventId == null || eventId.isBlank()) {
             return;
         }
 
         List<Booking> waitlist = bookingService.getWaitlist(eventId);
 
-        if(waitlist.isEmpty()) {
+        if (waitlist.isEmpty()) {
             waitlistTextArea.setText("No waitlisted bookings for event" + eventId);
             return;
         }
@@ -532,16 +575,16 @@ public class MainWindow extends JFrame {
         waitlistTextArea.setText(sb.toString());
     }
 
-    private void removeWaitlist(){
+    private void removeWaitlist() {
         String bookingId = JOptionPane.showInputDialog(this,
                 "Enter Booking ID to remove from waitlist: ");
-        if(bookingId == null || bookingId.isBlank()){
+        if (bookingId == null || bookingId.isBlank()) {
             return;
         }
 
         boolean ok = bookingService.removeWaitlistedBooking(bookingId);
 
-        if(ok){
+        if (ok) {
             JOptionPane.showMessageDialog(this, "Wailisted booking removed");
             refreshBookings();
             waitlistTextArea.setText("Waitlisted booking " + bookingId + " was removed.");
@@ -551,9 +594,9 @@ public class MainWindow extends JFrame {
         }
     }
 
-    private void viewRosterEvent(){
+    private void viewRosterEvent() {
         String eventId = JOptionPane.showInputDialog(this, "Enter Event ID:");
-        if(eventId == null || eventId.isBlank()){
+        if (eventId == null || eventId.isBlank()) {
             return;
         }
         ArrayList<Booking> roster = bookingService.getBookingsForEvent(eventId);
@@ -568,19 +611,19 @@ public class MainWindow extends JFrame {
 
         sb.append("CONFIRMED:\n");
         for (Booking b : roster) {
-            if(b.getBookingStatus().toString().equals("CONFIRMED")){
+            if (b.getBookingStatus().toString().equals("CONFIRMED")) {
                 sb.append(b).append("\n");
             }
         }
         sb.append("\nWAITLISTED:\n");
-        for(Booking b : roster){
-            if(b.getBookingStatus().toString().equals("WAITLISTED")){
-                sb.append(b).append("/n");
-            }
+        // Render waitlist in service-defined FIFO order (earliest createdAt first).
+        List<Booking> sortedWaitlist = bookingService.getWaitlist(eventId);
+        for (Booking b : sortedWaitlist) {
+            sb.append(b).append("\n");
         }
         sb.append("\nCANCELLED:\n");
-        for(Booking b : roster){
-            if(b.getBookingStatus().toString().equals("CANCELLED")){
+        for (Booking b : roster) {
+            if (b.getBookingStatus().toString().equals("CANCELLED")) {
                 sb.append(b).append("\n");
             }
         }
@@ -591,8 +634,40 @@ public class MainWindow extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
+    // Prompts for a title keyword and displays matching events in the Events text
+    // area.
+    private void searchEventsByTitle() {
+        String keyword = JOptionPane.showInputDialog(this, "Enter title keyword (blank = all):");
+        if (keyword == null) {
+            return;
+        }
+
+        List<Event> results = eventService.searchByTitle(keyword);
+        showEvents(results, "<no events match this title search>");
+    }
+
+    // Lets the user choose an event type and displays only matching events.
+    private void filterEventsByType() {
+        String[] types = { "All", "Workshop", "Seminar", "Concert" };
+
+        String selectedType = (String) JOptionPane.showInputDialog(
+                this,
+                "Select event type:",
+                "Filter Events",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                types,
+                types[0]);
+        if (selectedType == null) {
+            return;
+        }
+
+        List<Event> results = eventService.searchByType(selectedType);
+        showEvents(results, "<no events match this type filter>");
+    }
+
     // Edit Event button
-    private void editEvent(){
+    private void editEvent() {
         String id = JOptionPane.showInputDialog(this, "Enter Event ID to edit:");
         if (id == null || id.isBlank())
             return;
@@ -602,6 +677,8 @@ public class MainWindow extends JFrame {
             JOptionPane.showMessageDialog(this, "Event not found");
             return;
         }
+
+        int oldCapacity = event.getCapacity();
 
         // Show current details
         String currentDetails = "Current Event Details:\n" +
@@ -615,10 +692,13 @@ public class MainWindow extends JFrame {
 
         // Prompt for new values
         String newTitle = JOptionPane.showInputDialog(this, "New Title:", event.getTitle());
-        if (newTitle == null) return; // Cancel
+        if (newTitle == null)
+            return; // Cancel
 
-        String dtStr = JOptionPane.showInputDialog(this, "New Date/time (YYYY-MM-DDTHH:MM):", event.getDateTime().toString());
-        if (dtStr == null) return;
+        String dtStr = JOptionPane.showInputDialog(this, "New Date/time (YYYY-MM-DDTHH:MM):",
+                event.getDateTime().toString());
+        if (dtStr == null)
+            return;
         LocalDateTime newDt;
         try {
             newDt = LocalDateTime.parse(dtStr);
@@ -628,10 +708,12 @@ public class MainWindow extends JFrame {
         }
 
         String newLocation = JOptionPane.showInputDialog(this, "New Location:", event.getLocation());
-        if (newLocation == null) return;
+        if (newLocation == null)
+            return;
 
         String capStr = JOptionPane.showInputDialog(this, "New Capacity:", String.valueOf(event.getCapacity()));
-        if (capStr == null) return;
+        if (capStr == null)
+            return;
         int newCap;
         try {
             newCap = Integer.parseInt(capStr);
@@ -640,44 +722,97 @@ public class MainWindow extends JFrame {
             return;
         }
 
+        // Determine which type-specific field this event supports.
+        String typeSpecificPrompt;
+        String currentTypeSpecificValue;
+        if (event instanceof Workshop) {
+            typeSpecificPrompt = "New Topic:";
+            currentTypeSpecificValue = ((Workshop) event).getTopic();
+        } else if (event instanceof Seminar) {
+            typeSpecificPrompt = "New Speaker:";
+            currentTypeSpecificValue = ((Seminar) event).getSpeakerName();
+        } else if (event instanceof Concert) {
+            typeSpecificPrompt = "New Age Restriction:";
+            currentTypeSpecificValue = ((Concert) event).getAgeRestriction();
+        } else {
+            typeSpecificPrompt = null;
+            currentTypeSpecificValue = null;
+        }
+
+        // Prompt for topic/speaker/age restriction only when applicable.
+        String newTypeDetail = null;
+        if (typeSpecificPrompt != null) {
+            newTypeDetail = JOptionPane.showInputDialog(this, typeSpecificPrompt, currentTypeSpecificValue);
+            if (newTypeDetail == null) {
+                return;
+            }
+        }
+
         // Update the event
-        boolean ok = eventService.updateEvent(id, newTitle, newDt, newLocation, newCap);
+        boolean ok = eventService.updateEventWithTypeDetails(id, newTitle, newDt, newLocation, newCap, newTypeDetail);
         if (ok) {
-            JOptionPane.showMessageDialog(this, "Event updated successfully");
+            StringBuilder message = new StringBuilder("Event updated successfully");
+
+            // If capacity was increased, auto-promote waitlisted bookings into new spots.
+            if (newCap > oldCapacity) {
+                // Snapshot FIFO waitlist order before promotion so we can report exactly
+                // which bookings were promoted to confirmed.
+                List<Booking> waitlistBeforePromotion = bookingService.getWaitlist(id);
+                int promoted = bookingService.promoteWaitlistToCapacity(id);
+                if (promoted > 0) {
+                    message.append("\nAutomatic promotions: ").append(promoted)
+                            .append(" waitlisted booking(s) moved to CONFIRMED.");
+
+                    int maxToShow = Math.min(promoted, waitlistBeforePromotion.size());
+                    for (int i = 0; i < maxToShow; i++) {
+                        Booking promotedBooking = waitlistBeforePromotion.get(i);
+                        message.append("\n - ")
+                                .append(promotedBooking.getBookingId())
+                                .append(" (User ")
+                                .append(promotedBooking.getUserId())
+                                .append(")");
+                    }
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, message.toString());
         } else {
             JOptionPane.showMessageDialog(this, "Failed to update event (check console)");
         }
         refreshEvents();
+        refreshBookings();
     }
 
-    //==================================== REMOVE / CANCEL METHODS =============================================
+    // ==================================== REMOVE / CANCEL METHODS
+    // =============================================
 
-    private void removeUser(){
+    private void removeUser() {
         String id = JOptionPane.showInputDialog(this, "Enter User ID to remove:");
-        if (id == null || id.isBlank()){
+        if (id == null || id.isBlank()) {
             return;
         }
 
-        if (bookingService.hasBookingsForUser(id)){
+        if (bookingService.hasBookingsForUser(id)) {
             JOptionPane.showMessageDialog(this, "Cannot remove user: this user has existing bookings");
             return;
         }
         boolean ok = userService.removeUser(id);
-        if(ok){
+        if (ok) {
             JOptionPane.showMessageDialog(this, "User removed");
         } else {
             JOptionPane.showMessageDialog(this, "Failed to remove user (user may not exist)");
         }
         refreshUsers();
     }
+
     // CANCEL EVENT
-    private void cancelEvent(){
+    private void cancelEvent() {
         String id = JOptionPane.showInputDialog(this, "Enter Event ID to cancel:");
-        if(id == null || id.isBlank()){
+        if (id == null || id.isBlank()) {
             return;
         }
         boolean ok = eventService.cancelEvent(id);
-        if(ok){
+        if (ok) {
             int changed = bookingService.cancelBookingsForEvent(id);
             JOptionPane.showMessageDialog(this, "Event cancelled. \nBookings cancelled: " + changed);
         } else {
@@ -686,21 +821,63 @@ public class MainWindow extends JFrame {
         refreshEvents();
         refreshBookings();
     }
+
     // CANCEL BOOKING
-    private void cancelBooking(){
+    private void cancelBooking() {
         String bookingId = JOptionPane.showInputDialog(this, "Enter Booking ID to cancel");
-        if(bookingId == null || bookingId.isBlank()){
+        if (bookingId == null || bookingId.isBlank()) {
             return;
+        }
+
+        // Locate the booking so we can determine whether cancellation may trigger
+        // promotion.
+        Booking targetBooking = null;
+        for (Booking b : bookingService.getAllBookings()) {
+            if (b.getBookingId().equalsIgnoreCase(bookingId)) {
+                targetBooking = b;
+                break;
+            }
+        }
+
+        String eventId = targetBooking != null ? targetBooking.getEventId() : null;
+        boolean wasConfirmed = targetBooking != null && targetBooking.getBookingStatus() == BookingStatus.CONFIRMED;
+        Booking promotedCandidate = null;
+
+        // Snapshot who should be next before cancellation, then verify after mutation.
+        if (wasConfirmed && eventId != null) {
+            List<Booking> waitlistBeforeCancel = bookingService.getWaitlist(eventId);
+            if (!waitlistBeforeCancel.isEmpty()) {
+                promotedCandidate = waitlistBeforeCancel.get(0);
+            }
         }
 
         boolean ok = bookingService.cancelBooking(bookingId);
 
-        if(ok){
-            JOptionPane.showMessageDialog(this, "Booking cancelled");
+        if (ok) {
+            StringBuilder message = new StringBuilder("Booking cancelled");
+
+            // Confirm that the expected candidate actually became CONFIRMED.
+            if (wasConfirmed && promotedCandidate != null) {
+                for (Booking b : bookingService.getAllBookings()) {
+                    if (b.getBookingId().equals(promotedCandidate.getBookingId())
+                            && b.getBookingStatus() == BookingStatus.CONFIRMED) {
+                        message.append("\nAutomatic promotion: ")
+                                .append(b.getBookingId())
+                                .append(" (User ")
+                                .append(b.getUserId())
+                                .append(") is now CONFIRMED for event ")
+                                .append(b.getEventId())
+                                .append(".");
+                        break;
+                    }
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, message.toString());
         } else {
             JOptionPane.showMessageDialog(this, "Failed to cancel booking (booking may not exist)");
         }
         refreshBookings();
     }
-    //</editor-fold>
+    // </editor-fold>
 }

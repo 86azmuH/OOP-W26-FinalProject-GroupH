@@ -15,7 +15,7 @@ import java.util.List;
 
 public class EventService {
 
-    //Stores all events in an array
+    // Stores all events in an array
     private ArrayList<Event> events;
     private final Path eventsCsvPath;
 
@@ -28,7 +28,7 @@ public class EventService {
         this.eventsCsvPath = csvPath;
     }
 
-    //Adds an event if valid and eventID is unique
+    // Adds an event if valid and eventID is unique
     public boolean addEvent(Event event) {
         if (event == null) {
             System.out.println("[EventService] addEvent failed: event is null");
@@ -46,12 +46,16 @@ public class EventService {
         }
 
         events.add(event);
-        try { updateFile(); } catch (Exception ignored) {}
+        try {
+            updateFile();
+        } catch (Exception ignored) {
+        }
         return true;
     }
 
     public Event getEventById(String eventId) {
-        if (eventId == null || eventId.isBlank()) return null;
+        if (eventId == null || eventId.isBlank())
+            return null;
 
         for (Event e : events) {
             if (e.getEventId().equals(eventId)) {
@@ -61,13 +65,14 @@ public class EventService {
         return null;
     }
 
-    //returns all events
-    public ArrayList<Event> getAllEvents(){
+    // returns all events
+    public ArrayList<Event> getAllEvents() {
         return events;
     }
 
-    //Updates event fields
-    public boolean updateEvent(String eventId, String newTitle, LocalDateTime newDateTime, String newLocation, int newCapacity) {
+    // Updates event fields
+    public boolean updateEvent(String eventId, String newTitle, LocalDateTime newDateTime, String newLocation,
+            int newCapacity) {
         Event e = getEventById(eventId);
         if (e == null) {
             System.out.println("[EventService] updateEvent failed: event not found " + eventId);
@@ -98,10 +103,14 @@ public class EventService {
             e.setCapacity(newCapacity);
         }
 
-        try { updateFile(); } catch (Exception ignored) {}
+        try {
+            updateFile();
+        } catch (Exception ignored) {
+        }
         return true;
     }
-    //Cancels an event
+
+    // Cancels an event
     public boolean cancelEvent(String eventId) {
         Event e = getEventById(eventId);
         if (e == null) {
@@ -110,31 +119,37 @@ public class EventService {
         }
 
         e.cancel();
-        try { updateFile(); } catch (Exception ignored) {}
+        try {
+            updateFile();
+        } catch (Exception ignored) {
+        }
         return true;
     }
 
-    //true for when an event exists and is active
+    // true for when an event exists and is active
     public boolean isEventActive(String eventId) {
         Event e = getEventById(eventId);
         return e != null && e.getStatus() == EventStatus.ACTIVE;
     }
 
-    //Cancel event by EventId
-    public boolean removeEvent(String eventId){
-        if(eventId == null || eventId.isBlank()){
+    // Cancel event by EventId
+    public boolean removeEvent(String eventId) {
+        if (eventId == null || eventId.isBlank()) {
             System.out.println("[EventService] cancelEvent failed: eventId is blank.");
             return false;
         }
 
-        for (Event event: events){
-            if(event.getEventId().equalsIgnoreCase(eventId)){
-                if(event.getStatus() == EventStatus.CANCELLED){
+        for (Event event : events) {
+            if (event.getEventId().equalsIgnoreCase(eventId)) {
+                if (event.getStatus() == EventStatus.CANCELLED) {
                     System.out.println("[EventService] cancelEvent failed: event already cancelled");
                     return false;
                 }
                 event.cancel();
-                try { updateFile(); } catch (Exception ignored) {}
+                try {
+                    updateFile();
+                } catch (Exception ignored) {
+                }
                 return true;
             }
         }
@@ -153,7 +168,8 @@ public class EventService {
         events.clear();
         for (String line : lines) {
             String[] parts = line.split(",", -1);
-            if (parts.length < 7) continue;
+            if (parts.length < 7)
+                continue;
 
             // Skip header rows
             if (parts[0].trim().equalsIgnoreCase("eventId")) {
@@ -192,19 +208,29 @@ public class EventService {
                 statusStr = parts[6].trim().toUpperCase();
                 String extra = parts.length > 7 ? parts[7].trim() : "";
 
-                if ("WORKSHOP".equals(type)) topic = extra;
-                if ("SEMINAR".equals(type)) speakerName = extra;
-                if ("CONCERT".equals(type)) ageRestriction = extra;
+                if ("WORKSHOP".equals(type))
+                    topic = extra;
+                if ("SEMINAR".equals(type))
+                    speakerName = extra;
+                if ("CONCERT".equals(type))
+                    ageRestriction = extra;
             }
 
             LocalDateTime dt = parseDateTime(dateStr);
 
             Event e;
             switch (type) {
-                case "CONCERT": e = new Concert(id, title, dt, location, capacity, ageRestriction); break;
-                case "SEMINAR": e = new Seminar(id, title, dt, location, capacity, speakerName); break;
-                case "WORKSHOP": e = new Workshop(id, title, dt, location, capacity, topic); break;
-                default: e = new Event(id, title, dt, location, capacity);
+                case "CONCERT":
+                    e = new Concert(id, title, dt, location, capacity, ageRestriction);
+                    break;
+                case "SEMINAR":
+                    e = new Seminar(id, title, dt, location, capacity, speakerName);
+                    break;
+                case "WORKSHOP":
+                    e = new Workshop(id, title, dt, location, capacity, topic);
+                    break;
+                default:
+                    e = new Event(id, title, dt, location, capacity);
             }
 
             if (statusStr.equals("CANCELLED")) {
@@ -227,9 +253,12 @@ public class EventService {
             String speakerName = "";
             String ageRestriction = "";
 
-            if (e instanceof Workshop) topic = ((Workshop)e).getTopic();
-            if (e instanceof Seminar) speakerName = ((Seminar)e).getSpeakerName();
-            if (e instanceof Concert) ageRestriction = ((Concert)e).getAgeRestriction();
+            if (e instanceof Workshop)
+                topic = ((Workshop) e).getTopic();
+            if (e instanceof Seminar)
+                speakerName = ((Seminar) e).getSpeakerName();
+            if (e instanceof Concert)
+                ageRestriction = ((Concert) e).getAgeRestriction();
 
             String status = e.getStatus() == EventStatus.CANCELLED ? "Cancelled" : "Active";
 
@@ -243,94 +272,103 @@ public class EventService {
                     safe(eventType),
                     safe(topic),
                     safe(speakerName),
-                    safe(ageRestriction)
-            ));
+                    safe(ageRestriction)));
         }
         CsvUtil.writeAll(eventsCsvPath, out);
     }
 
-    private String safe(String v) { return v == null ? "" : v.replace(","," "); }
-    private int parseIntSafe(String s, int def) {
-        try { return Integer.parseInt(s); } catch (Exception e) { return def; }
+    private String safe(String v) {
+        return v == null ? "" : v.replace(",", " ");
     }
+
+    private int parseIntSafe(String s, int def) {
+        try {
+            return Integer.parseInt(s);
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
     private LocalDateTime parseDateTime(String s) {
-        try { return LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME); }
-        catch (Exception ex) {
-            try { return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")); }
-            catch (Exception ignored) { return LocalDateTime.now(); }
+        try {
+            return LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception ex) {
+            try {
+                return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
+            } catch (Exception ignored) {
+                return LocalDateTime.now();
+            }
         }
     }
 
     private boolean isKnownEventType(String value) {
-        if (value == null) return false;
+        if (value == null)
+            return false;
         String normalized = value.trim().toUpperCase();
         return normalized.equals("WORKSHOP") || normalized.equals("SEMINAR") || normalized.equals("CONCERT");
     }
 
-    public List<Event> searchByTitle(String keyword)
-    {
-        //List to store matching events
+    public List<Event> searchByTitle(String keyword) {
+        // List to store matching events
         List<Event> results = new ArrayList<>();
 
-        //Checks all events
+        // Checks all events
         for (Event event : events) {
-            //If empty, its like show all
+            // If empty, its like show all
             if (keyword == null || keyword.trim().isEmpty()) {
                 results.add(event);
 
-                //Checks if event title has the keyword
+                // Checks if event title has the keyword
             } else if (event.getTitle().toLowerCase().contains(keyword.toLowerCase())) {
                 results.add(event);
             }
         }
 
-        //returns list of matching events
+        // returns list of matching events
         return results;
 
     }
 
-    public List<Event> searchByType(String type)
-    {
-        //New List to store
+    public List<Event> searchByType(String type) {
+        // New List to store
         List<Event> results = new ArrayList<>();
 
-        //Checks all events
+        // Checks all events
         for (Event event : events) {
-            //Checks if empty, if so, shows all
+            // Checks if empty, if so, shows all
             if (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) {
                 results.add(event);
-                //Checks for a match in event type
+                // Checks for a match in event type
             } else if (event.getClass().getSimpleName().equalsIgnoreCase(type)) {
                 results.add(event);
             }
         }
 
-        //Returns matches
+        // Returns matches
         return results;
     }
 
-    public List<Event> searchAndFilter(String keyword, String type)
-    {
-        //New list
+    public List<Event> searchAndFilter(String keyword, String type) {
+        // New list
         List<Event> results = new ArrayList<>();
 
-        //Checks all events
+        // Checks all events
         for (Event event : events) {
-            //Becomes true if title matches keyword
+            // Becomes true if title matches keyword
             boolean matchesTitle = (keyword == null || keyword.trim().isEmpty()) ||
                     event.getTitle().toLowerCase().contains(keyword.toLowerCase());
 
-            //Becomes true if type matches the chosen type
+            // Becomes true if type matches the chosen type
             boolean matchesType = (type == null || type.trim().isEmpty() || type.equalsIgnoreCase("All")) ||
                     event.getClass().getSimpleName().equalsIgnoreCase(type);
 
-            //Adds to event ONLY if both are true(both matches)
+            // Adds to event ONLY if both are true(both matches)
             if (matchesTitle && matchesType) {
                 results.add(event);
             }
         }
 
-        //Returns the final list
+        // Returns the final list
         return results;
     }
 

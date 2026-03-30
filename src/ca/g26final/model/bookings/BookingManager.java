@@ -71,7 +71,8 @@ public class BookingManager {
 
         BookingStatus status;
 
-        // If the event still has space, check whether the user can take a confirmed spot
+        // If the event still has space, check whether the user can take a confirmed
+        // spot
         if (countConfirmedBookingsForEvent(event.getEventId()) < event.getCapacity()) {
             // Only block if the user has already reached their confirmed-booking limit;
             // this check only applies when a confirmed spot would actually be assigned
@@ -81,7 +82,8 @@ public class BookingManager {
             }
             status = BookingStatus.CONFIRMED;
         }
-        // If the event is full, place the user on the waitlist regardless of confirmed limit;
+        // If the event is full, place the user on the waitlist regardless of confirmed
+        // limit;
         // being waitlisted does not consume a confirmed booking slot
         else {
             status = BookingStatus.WAITLISTED;
@@ -233,6 +235,27 @@ public class BookingManager {
             }
         }
         return earliest;
+    }
+
+    // Fills newly available confirmed spots from the waitlist in FIFO order.
+    public int promoteWaitlistedBookingsToCapacity(String eventId, int capacity) {
+        if (eventId == null || eventId.isBlank() || capacity <= 0) {
+            return 0;
+        }
+
+        int promoted = 0;
+        while (countConfirmedBookingsForEvent(eventId) < capacity) {
+            Booking earliest = getEarliestWaitlistedBooking(eventId);
+            if (earliest == null) {
+                break;
+            }
+
+            earliest.setBookingStatus(BookingStatus.CONFIRMED);
+            promoted++;
+            System.out.println("Promoted from waitlist: " + earliest.getBookingId());
+        }
+
+        return promoted;
     }
 
     // Counts how many confirmed bookings an event has

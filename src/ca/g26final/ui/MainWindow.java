@@ -52,7 +52,7 @@ public class MainWindow extends JFrame {
 
         // Giving the frame a title and setting size,height and exit on close
         setTitle("Campus Event Booking System");
-        setSize(600, 400);
+        setSize(900, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -170,6 +170,22 @@ public class MainWindow extends JFrame {
         JButton rosterButton = new JButton("View Event Roster");
         rosterButton.addActionListener(e -> viewRosterEvent());
         buttonPanel.add(rosterButton);
+
+        // SEARCH BY TITLE
+        JButton searchTitleButton = new JButton("Search Title");
+        searchTitleButton.addActionListener(e -> searchEventsByTitle());
+        buttonPanel.add(searchTitleButton);
+
+        // FILTER BY TYPE
+        JButton filterTypeButton = new JButton("Filter Type");
+        filterTypeButton.addActionListener(e -> filterEventsByType());
+        buttonPanel.add(filterTypeButton);
+
+        // RESET VIEW
+        JButton showAllButton = new JButton("Show All");
+        showAllButton.addActionListener(e -> refreshEvents());
+        buttonPanel.add(showAllButton);
+
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         refreshEvents();
@@ -277,6 +293,20 @@ public class MainWindow extends JFrame {
             }
             eventsTextArea.setText(sb.toString());
         }
+    }
+
+    // Writes a list of events to the Events tab using a custom empty-state message.
+    private void showEvents(List<Event> events, String emptyMessage) {
+        if (events.isEmpty()) {
+            eventsTextArea.setText(emptyMessage);
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Event event : events) {
+            sb.append(event.toString()).append("\n");
+        }
+        eventsTextArea.setText(sb.toString());
     }
 
     // Same thing for bookings
@@ -604,6 +634,38 @@ public class MainWindow extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE);
     }
 
+    // Prompts for a title keyword and displays matching events in the Events text
+    // area.
+    private void searchEventsByTitle() {
+        String keyword = JOptionPane.showInputDialog(this, "Enter title keyword (blank = all):");
+        if (keyword == null) {
+            return;
+        }
+
+        List<Event> results = eventService.searchByTitle(keyword);
+        showEvents(results, "<no events match this title search>");
+    }
+
+    // Lets the user choose an event type and displays only matching events.
+    private void filterEventsByType() {
+        String[] types = { "All", "Workshop", "Seminar", "Concert" };
+
+        String selectedType = (String) JOptionPane.showInputDialog(
+                this,
+                "Select event type:",
+                "Filter Events",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                types,
+                types[0]);
+        if (selectedType == null) {
+            return;
+        }
+
+        List<Event> results = eventService.searchByType(selectedType);
+        showEvents(results, "<no events match this type filter>");
+    }
+
     // Edit Event button
     private void editEvent() {
         String id = JOptionPane.showInputDialog(this, "Enter Event ID to edit:");
@@ -615,6 +677,8 @@ public class MainWindow extends JFrame {
             JOptionPane.showMessageDialog(this, "Event not found");
             return;
         }
+
+        int oldCapacity = event.getCapacity();
 
         // Show current details
         String currentDetails = "Current Event Details:\n" +
@@ -658,14 +722,52 @@ public class MainWindow extends JFrame {
             return;
         }
 
+        // Determine which type-specific field this event supports.
+        String typeSpecificPrompt;
+        String currentTypeSpecificValue;
+        if (event instanceof Workshop) {
+            typeSpecificPrompt = "New Topic:";
+            currentTypeSpecificValue = ((Workshop) event).getTopic();
+        } else if (event instanceof Seminar) {
+            typeSpecificPrompt = "New Speaker:";
+            currentTypeSpecificValue = ((Seminar) event).getSpeakerName();
+        } else if (event instanceof Concert) {
+            typeSpecificPrompt = "New Age Restriction:";
+            currentTypeSpecificValue = ((Concert) event).getAgeRestriction();
+        } else {
+            typeSpecificPrompt = null;
+            currentTypeSpecificValue = null;
+        }
+
+        // Prompt for topic/speaker/age restriction only when applicable.
+        String newTypeDetail = null;
+        if (typeSpecificPrompt != null) {
+            newTypeDetail = JOptionPane.showInputDialog(this, typeSpecificPrompt, currentTypeSpecificValue);
+            if (newTypeDetail == null) {
+                return;
+            }
+        }
+
         // Update the event
-        boolean ok = eventService.updateEvent(id, newTitle, newDt, newLocation, newCap);
+        boolean ok = eventService.updateEventWithTypeDetails(id, newTitle, newDt, newLocation, newCap, newTypeDetail);
         if (ok) {
-            JOptionPane.showMessageDialog(this, "Event updated successfully");
+            StringBuilder message = new StringBuilder("Event updated successfully");
+
+            // If capacity was increased, auto-promote waitlisted bookings into new spots.
+            if (newCap > oldCapacity) {
+                int promoted = bookingService.promoteWaitlistToCapacity(id);
+                if (promoted > 0) {
+                    message.append("\nAutomatic promotions: ").append(promoted)
+                            .append(" waitlisted booking(s) moved to CONFIRMED.");
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, message.toString());
         } else {
             JOptionPane.showMessageDialog(this, "Failed to update event (check console)");
         }
         refreshEvents();
+        refreshBookings();
     }
 
     // ==================================== REMOVE / CANCEL METHODS

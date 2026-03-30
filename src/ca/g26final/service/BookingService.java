@@ -28,13 +28,13 @@ public class BookingService {
     // Books an event using IDs (returns Booking or null if failed)
     public Booking bookEvent(String userId, String eventId) {
 
-        //checks that user id is valid
+        // checks that user id is valid
         if (userId == null || userId.isBlank()) {
             System.out.println("[BookingService] bookEvent failed: userId blank");
             return null;
         }
 
-        //checks that event id is valid
+        // checks that event id is valid
         if (eventId == null || eventId.isBlank()) {
             System.out.println("[BookingService] bookEvent failed: eventId blank");
             return null;
@@ -46,14 +46,15 @@ public class BookingService {
             return null;
         }
 
-        //creates an object even and searches through stored events, returning an event if it finds one and returning null if it does not
+        // creates an object even and searches through stored events, returning an event
+        // if it finds one and returning null if it does not
         Event event = eventService.getEventById(eventId.trim());
         if (event == null) {
             System.out.println("[BookingService] bookEvent failed: event not found " + eventId);
             return null;
         }
 
-        if(event.getStatus() == EventStatus.CANCELLED){
+        if (event.getStatus() == EventStatus.CANCELLED) {
             System.out.println("[BookingService] bookEvent failed: event is cancelled");
             return null;
         }
@@ -61,7 +62,10 @@ public class BookingService {
         // BookingManager does all booking rules. It returns null if it fails.
         Booking b = bookingManager.createBooking(user, event);
         if (b != null) {
-            try { updateFile(); } catch (Exception ignored) {}
+            try {
+                updateFile();
+            } catch (Exception ignored) {
+            }
         }
         return b;
     }
@@ -70,7 +74,12 @@ public class BookingService {
     // cancelled, false otherwise.
     public boolean cancelBooking(String bookingId) {
         boolean ok = bookingManager.cancelBooking(bookingId);
-        if (ok) { try { updateFile(); } catch (Exception ignored) {} }
+        if (ok) {
+            try {
+                updateFile();
+            } catch (Exception ignored) {
+            }
+        }
         return ok;
     }
 
@@ -94,7 +103,7 @@ public class BookingService {
         return bookingManager.getWaitlistedBookingsForEvent(eventId);
     }
 
-    //cancels everything
+    // cancels everything
     public boolean cancelEventAndCancelBookings(String eventId) {
 
         if (eventId == null || eventId.isBlank()) {
@@ -116,17 +125,18 @@ public class BookingService {
 
         // Optional message for debugging
         System.out.println("[BookingService] Event cancelled. Bookings cancelled: " + cancelledCount);
-        try { updateFile(); } catch (Exception ignored) {}
+        try {
+            updateFile();
+        } catch (Exception ignored) {
+        }
 
         return true;
     }
-
 
     // expose all bookings for UI purposes
     public ArrayList<Booking> getAllBookings() {
         return bookingManager.getAllBookings();
     }
-
 
     // Check for User Booking
     public boolean hasBookingsForUser(String userId) {
@@ -161,6 +171,29 @@ public class BookingService {
     public int cancelBookingsForEvent(String eventId) {
         return bookingManager.cancelAllBookingsForEventNoPromotion(eventId);
     }
+
+    // Promotes waitlisted bookings to confirmed until the event reaches capacity.
+    public int promoteWaitlistToCapacity(String eventId) {
+        if (eventId == null || eventId.isBlank()) {
+            return 0;
+        }
+
+        // Read current event capacity so promotions use the latest edited value.
+        Event event = eventService.getEventById(eventId.trim());
+        if (event == null) {
+            return 0;
+        }
+
+        int promoted = bookingManager.promoteWaitlistedBookingsToCapacity(event.getEventId(), event.getCapacity());
+        if (promoted > 0) {
+            try {
+                updateFile();
+            } catch (Exception ignored) {
+            }
+        }
+        return promoted;
+    }
+
     // Kayden changed this to be safer (avoid iterating while looping)
     // Make sure you understand
     public boolean removeWaitlistedBooking(String bookingId) {

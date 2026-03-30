@@ -110,6 +110,64 @@ public class EventService {
         return true;
     }
 
+    // Updates event fields including type-specific details
+    // (topic/speaker/ageRestriction).
+    public boolean updateEventWithTypeDetails(String eventId, String newTitle, LocalDateTime newDateTime,
+            String newLocation, int newCapacity, String newTypeDetail) {
+        Event existing = getEventById(eventId);
+        if (existing == null) {
+            System.out.println("[EventService] updateEventWithTypeDetails failed: event not found " + eventId);
+            return false;
+        }
+
+        // Keep original values when user input is blank/invalid.
+        String finalTitle = (newTitle == null || newTitle.isBlank()) ? existing.getTitle() : newTitle;
+        LocalDateTime finalDateTime = (newDateTime == null) ? existing.getDateTime() : newDateTime;
+        String finalLocation = (newLocation == null || newLocation.isBlank()) ? existing.getLocation() : newLocation;
+        int finalCapacity = (newCapacity <= 0) ? existing.getCapacity() : newCapacity;
+
+        // Rebuild an instance of the same concrete event type with updated values.
+        Event updated;
+        if (existing instanceof Workshop) {
+            String finalTopic = (newTypeDetail == null || newTypeDetail.isBlank())
+                    ? ((Workshop) existing).getTopic()
+                    : newTypeDetail;
+            updated = new Workshop(existing.getEventId(), finalTitle, finalDateTime, finalLocation, finalCapacity,
+                    finalTopic);
+        } else if (existing instanceof Seminar) {
+            String finalSpeaker = (newTypeDetail == null || newTypeDetail.isBlank())
+                    ? ((Seminar) existing).getSpeakerName()
+                    : newTypeDetail;
+            updated = new Seminar(existing.getEventId(), finalTitle, finalDateTime, finalLocation, finalCapacity,
+                    finalSpeaker);
+        } else if (existing instanceof Concert) {
+            String finalAgeRestriction = (newTypeDetail == null || newTypeDetail.isBlank())
+                    ? ((Concert) existing).getAgeRestriction()
+                    : newTypeDetail;
+            updated = new Concert(existing.getEventId(), finalTitle, finalDateTime, finalLocation, finalCapacity,
+                    finalAgeRestriction);
+        } else {
+            updated = new Event(existing.getEventId(), finalTitle, finalDateTime, finalLocation, finalCapacity);
+        }
+
+        // Keep cancelled state if the original event was cancelled.
+        if (existing.getStatus() == EventStatus.CANCELLED) {
+            updated.cancel();
+        }
+
+        // Replace the object in-place to preserve list ordering and IDs.
+        int index = events.indexOf(existing);
+        if (index >= 0) {
+            events.set(index, updated);
+        }
+
+        try {
+            updateFile();
+        } catch (Exception ignored) {
+        }
+        return true;
+    }
+
     // Cancels an event
     public boolean cancelEvent(String eventId) {
         Event e = getEventById(eventId);

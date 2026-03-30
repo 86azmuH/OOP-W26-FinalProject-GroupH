@@ -279,6 +279,12 @@ public class BookingManager {
         for (String line : lines) {
             String[] p = line.split(",", -1);
             if (p.length < 5) continue;
+
+            // Skip header rows
+            if (p[0].trim().equalsIgnoreCase("bookingId")) {
+                continue;
+            }
+
             String bid = p[0].trim();
             String uid = p[1].trim();
             String eid = p[2].trim();
@@ -287,7 +293,10 @@ public class BookingManager {
 
             LocalDateTime created;
             try { created = LocalDateTime.parse(createdStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME); }
-            catch (Exception ex) { created = LocalDateTime.now(); }
+            catch (Exception ex) {
+                try { created = LocalDateTime.parse(createdStr, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")); }
+                catch (Exception ignored) { created = LocalDateTime.now(); }
+            }
 
             BookingStatus st;
             try { st = BookingStatus.valueOf(statusStr); } catch (Exception ex) { st = BookingStatus.CANCELLED; }
@@ -306,19 +315,33 @@ public class BookingManager {
 
     public void updateFile(Path path) throws Exception {
         ArrayList<String> out = new ArrayList<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        // Keep CSV output aligned with assignment starter schema.
+        out.add("bookingId,userId,eventId,createdAt,bookingStatus");
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         for (Booking b : bookings) {
+            String status = toTitleCaseStatus(b.getBookingStatus());
             out.add(String.join(",",
                     safe(b.getBookingId()),
                     safe(b.getUserId()),
                     safe(b.getEventId()),
                     safe(b.getCreatedAt().format(fmt)),
-                    safe(b.getBookingStatus().name())
+                    safe(status)
             ));
         }
         CsvUtil.writeAll(path, out);
     }
 
     private String safe(String v) { return v == null ? "" : v.replace(","," "); }
+
+    private String toTitleCaseStatus(BookingStatus status) {
+        if (status == null) return "Cancelled";
+        switch (status) {
+            case CONFIRMED: return "Confirmed";
+            case WAITLISTED: return "Waitlisted";
+            default: return "Cancelled";
+        }
+    }
 }
 

@@ -7,7 +7,6 @@ import ca.g26final.model.users.User;
 import ca.g26final.persistence.CsvUtil;
 
 import java.nio.file.Path;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,17 +90,36 @@ public class UserService {
     }
 
     // Persistence: load users from CSV
-    // Format: userId,type,name,email
+    // Preferred format: userId,name,email,userType
+    // Legacy format supported: userId,type,name,email
     public void loadFromCsv() throws Exception {
         List<String> lines = CsvUtil.readAll(usersCsvPath);
         users.clear();
         for (String line : lines) {
             String[] parts = line.split(",", -1);
             if (parts.length < 4) continue;
+
+            // Skip header rows
+            if (parts[0].trim().equalsIgnoreCase("userId")) {
+                continue;
+            }
+
             String id = parts[0].trim();
-            String type = parts[1].trim().toUpperCase();
-            String name = parts[2].trim();
-            String email = parts[3].trim();
+            String name;
+            String email;
+            String type;
+
+            // Detect preferred schema (userId,name,email,userType)
+            if (isKnownUserType(parts[3].trim())) {
+                name = parts[1].trim();
+                email = parts[2].trim();
+                type = parts[3].trim().toUpperCase();
+            } else {
+                // Legacy fallback (userId,type,name,email)
+                type = parts[1].trim().toUpperCase();
+                name = parts[2].trim();
+                email = parts[3].trim();
+            }
 
             User u;
             switch (type) {
@@ -118,20 +136,26 @@ public class UserService {
     // Writes current users to CSV
     public void updateFile() throws Exception {
         ArrayList<String> out = new ArrayList<>();
+
+        // Keep CSV output aligned with assignment starter schema.
+        out.add("userId,name,email,userType");
+
         for (User u : users) {
-            String type = u.getClass().getSimpleName().toUpperCase();
-            // Normalize to base types
-            if (!type.equals("STUDENT") && !type.equals("STAFF") && !type.equals("GUEST")) {
-                type = "STUDENT";
-            }
+            String type = u.getClass().getSimpleName();
             out.add(String.join(",",
                     safe(u.getUserId()),
-                    safe(type),
                     safe(u.getName()),
-                    safe(u.getEmail())));
+                    safe(u.getEmail()),
+                    safe(type)));
         }
         CsvUtil.writeAll(usersCsvPath, out);
     }
 
     private String safe(String v) { return v == null ? "" : v.replace(","," "); }
+
+    private boolean isKnownUserType(String value) {
+        if (value == null) return false;
+        String normalized = value.trim().toUpperCase();
+        return normalized.equals("STUDENT") || normalized.equals("STAFF") || normalized.equals("GUEST");
+    }
 }

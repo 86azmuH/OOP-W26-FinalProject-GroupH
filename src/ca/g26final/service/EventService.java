@@ -144,30 +144,66 @@ public class EventService {
     }
 
     // Persistence
-    // CSV format:
-    // eventId,type,title,dateTimeISO,location,capacity,status[,extra]
+    // Preferred CSV format:
+    // eventId,title,dateTime,location,capacity,status,eventType,topic,speakerName,ageRestriction
+    // Legacy format supported:
+    // eventId,type,title,dateTime,location,capacity,status[,extra]
     public void loadFromCsv() throws Exception {
         List<String> lines = CsvUtil.readAll(eventsCsvPath);
         events.clear();
         for (String line : lines) {
             String[] parts = line.split(",", -1);
             if (parts.length < 7) continue;
+
+            // Skip header rows
+            if (parts[0].trim().equalsIgnoreCase("eventId")) {
+                continue;
+            }
+
             String id = parts[0].trim();
-            String type = parts[1].trim().toUpperCase();
-            String title = parts[2].trim();
-            String dateStr = parts[3].trim();
-            String location = parts[4].trim();
-            int capacity = parseIntSafe(parts[5].trim(), 1);
-            String statusStr = parts[6].trim().toUpperCase();
-            String extra = parts.length > 7 ? parts[7].trim() : "";
+            String type;
+            String title;
+            String dateStr;
+            String location;
+            int capacity;
+            String statusStr;
+            String topic = "";
+            String speakerName = "";
+            String ageRestriction = "";
+
+            // Preferred schema detection: event type at index 6
+            if (parts.length >= 10 && isKnownEventType(parts[6].trim())) {
+                title = parts[1].trim();
+                dateStr = parts[2].trim();
+                location = parts[3].trim();
+                capacity = parseIntSafe(parts[4].trim(), 1);
+                statusStr = parts[5].trim().toUpperCase();
+                type = parts[6].trim().toUpperCase();
+                topic = parts[7].trim();
+                speakerName = parts[8].trim();
+                ageRestriction = parts[9].trim();
+            } else {
+                // Legacy fallback schema
+                type = parts[1].trim().toUpperCase();
+                title = parts[2].trim();
+                dateStr = parts[3].trim();
+                location = parts[4].trim();
+                capacity = parseIntSafe(parts[5].trim(), 1);
+                statusStr = parts[6].trim().toUpperCase();
+                String extra = parts.length > 7 ? parts[7].trim() : "";
+
+                if ("WORKSHOP".equals(type)) topic = extra;
+                if ("SEMINAR".equals(type)) speakerName = extra;
+                if ("CONCERT".equals(type)) ageRestriction = extra;
+            }
 
             LocalDateTime dt = parseDateTime(dateStr);
 
             Event e;
             switch (type) {
-                case "CONCERT": e = new Concert(id, title, dt, location, capacity, extra); break;
-                case "SEMINAR": e = new Seminar(id, title, dt, location, capacity, extra); break;
-                case "WORKSHOP": e = new Workshop(id, title, dt, location, capacity, extra); break;
+                case "CONCERT": e = new Concert(id, title, dt, location, capacity, ageRestriction); break;
+                case "SEMINAR": e = new Seminar(id, title, dt, location, capacity, speakerName); break;
+                case "WORKSHOP": e = new Workshop(id, title, dt, location, capacity, topic); break;
                 default: e = new Event(id, title, dt, location, capacity);
             }
 
@@ -180,23 +216,34 @@ public class EventService {
 
     public void updateFile() throws Exception {
         ArrayList<String> out = new ArrayList<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        // Keep CSV output aligned with assignment starter schema.
+        out.add("eventId,title,dateTime,location,capacity,status,eventType,topic,speakerName,ageRestriction");
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
         for (Event e : events) {
-            String type = e.getClass().getSimpleName().toUpperCase();
-            String extra = "";
-            if (e instanceof Concert) extra = ((Concert)e).getAgeRestriction();
-            if (e instanceof Seminar) extra = ((Seminar)e).getSpeakerName();
-            if (e instanceof Workshop) extra = ((Workshop)e).getTopic();
+            String eventType = e.getClass().getSimpleName();
+            String topic = "";
+            String speakerName = "";
+            String ageRestriction = "";
+
+            if (e instanceof Workshop) topic = ((Workshop)e).getTopic();
+            if (e instanceof Seminar) speakerName = ((Seminar)e).getSpeakerName();
+            if (e instanceof Concert) ageRestriction = ((Concert)e).getAgeRestriction();
+
+            String status = e.getStatus() == EventStatus.CANCELLED ? "Cancelled" : "Active";
 
             out.add(String.join(",",
                     safe(e.getEventId()),
-                    safe(type),
                     safe(e.getTitle()),
                     safe(e.getDateTime().format(fmt)),
                     safe(e.getLocation()),
                     Integer.toString(e.getCapacity()),
-                    safe(e.getStatus().name()),
-                    safe(extra)
+                    safe(status),
+                    safe(eventType),
+                    safe(topic),
+                    safe(speakerName),
+                    safe(ageRestriction)
             ));
         }
         CsvUtil.writeAll(eventsCsvPath, out);
@@ -208,7 +255,16 @@ public class EventService {
     }
     private LocalDateTime parseDateTime(String s) {
         try { return LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME); }
-        catch (Exception ex) { return LocalDateTime.now(); }
+        catch (Exception ex) {
+            try { return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")); }
+            catch (Exception ignored) { return LocalDateTime.now(); }
+        }
+    }
+
+    private boolean isKnownEventType(String value) {
+        if (value == null) return false;
+        String normalized = value.trim().toUpperCase();
+        return normalized.equals("WORKSHOP") || normalized.equals("SEMINAR") || normalized.equals("CONCERT");
     }
 
     public List<Event> searchByTitle(String keyword)

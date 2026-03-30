@@ -1,3 +1,50 @@
+/*
+ * BookingServiceTest //bassically creates test cases to make sure our service works. Need to download Junit stuff in project structure to run
+ *
+ * This class tests the main booking rules of the event system using junit test from maven
+ * Instead of running the whole application manually, these tests create a small
+ * sample setup with users and events, perform booking actions, and then check
+ * whether the results are correct.
+ *
+ * A fresh system is created before each test using @BeforeEach. This is important
+ * because it keeps the tests independent from one another. If one test changes
+ * the booking data, that change should not affect the next test.
+ *
+ * The test cases cover four important behaviours:
+ *
+ * 1. Booking under capacity
+ *    This checks that when an event still has space, the booking is created
+ *    successfully and the status becomes CONFIRMED.
+ *
+ * 2. Booking when full
+ *    This checks that once the event reaches capacity, the next user is not
+ *    given a confirmed spot and is placed on the WAITLIST instead.
+ *
+ * 3. Cancelling a confirmed booking
+ *    This checks that when a confirmed booking is cancelled, the first person
+ *    on the waitlist is promoted into the confirmed list.
+ *
+ * 4. Duplicate booking prevention
+ *    This checks that the same user cannot actively book the same event twice.
+ *    The first booking should succeed, and the second attempt should fail.
+ *
+ * These tests help prove that the booking logic works correctly and consistently.
+ * They are especially useful after making code changes, because they quickly show
+ * whether any core booking rule has been broken.
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
 package ca.g26final.test;
 
 import ca.g26final.model.bookings.Booking;

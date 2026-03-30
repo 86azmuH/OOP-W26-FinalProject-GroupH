@@ -4,14 +4,17 @@ import ca.g26final.model.events.Event;
 import ca.g26final.model.events.EventStatus;
 import ca.g26final.model.users.User;
 import ca.g26final.persistence.CsvUtil;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.nio.file.Path;
 
 public class BookingManager {
+
+    // Keep noisy booking logs disabled by default (useful for clean test output).
+    private static final boolean DEBUG_LOGS = false;
 
     // Stores all bookings in the system
     // A booking can be confirmed, waitlisted, or cancelled
@@ -27,6 +30,12 @@ public class BookingManager {
         nextBookingNumber = 1;
     }
 
+    private void log(String message) {
+        if (DEBUG_LOGS) {
+            System.out.println(message);
+        }
+    }
+
     // Creates a new booking ID like B1, B2, B3...
     private String generateBookingId() {
         String bookingId = "B" + nextBookingNumber;
@@ -39,19 +48,19 @@ public class BookingManager {
 
         // Check if the user is missing
         if (user == null) {
-            System.out.println("[BookingManager] createBooking failed: user is null");
+            log("[BookingManager] createBooking failed: user is null");
             return null;
         }
 
         // Check if the event is missing
         if (event == null) {
-            System.out.println("[BookingManager] createBooking failed: event is null");
+            log("[BookingManager] createBooking failed: event is null");
             return null;
         }
 
         // Do not allow booking if the event is cancelled
         if (event.getStatus() == EventStatus.CANCELLED) {
-            System.out.println("[BookingManager] createBooking failed: event is cancelled");
+            log("[BookingManager] createBooking failed: event is cancelled");
             return null;
         }
 
@@ -60,8 +69,7 @@ public class BookingManager {
             if (b.getUserId().equals(user.getUserId())
                     && b.getEventId().equals(event.getEventId())
                     && b.isActive()) {
-                System.out.println(
-                        "[BookingManager] createBooking failed: duplicate active booking (user already booked this event)");
+                log("[BookingManager] createBooking failed: duplicate active booking (user already booked this event)");
                 return null;
             }
         }
@@ -77,7 +85,7 @@ public class BookingManager {
             // Only block if the user has already reached their confirmed-booking limit;
             // this check only applies when a confirmed spot would actually be assigned
             if (confirmedForUser >= user.getMaxConfirmedBookings()) {
-                System.out.println("[BookingManager] createBooking failed: user reached max confirmed bookings");
+                log("[BookingManager] createBooking failed: user reached max confirmed bookings");
                 return null;
             }
             status = BookingStatus.CONFIRMED;
@@ -109,7 +117,7 @@ public class BookingManager {
 
         // Check if the booking ID is missing or blank
         if (bookingId == null || bookingId.isBlank()) {
-            System.out.println("[BookingManager] cancelBooking failed: bookingId blank");
+            log("[BookingManager] cancelBooking failed: bookingId blank");
             return false;
         }
 
@@ -146,7 +154,7 @@ public class BookingManager {
         Booking earliest = getEarliestWaitlistedBooking(eventId);
         if (earliest != null) {
             earliest.setBookingStatus(BookingStatus.CONFIRMED);
-            System.out.println("Promoted from waitlist: " + earliest.getBookingId());
+            log("Promoted from waitlist: " + earliest.getBookingId());
         }
     }
 
@@ -252,7 +260,7 @@ public class BookingManager {
 
             earliest.setBookingStatus(BookingStatus.CONFIRMED);
             promoted++;
-            System.out.println("Promoted from waitlist: " + earliest.getBookingId());
+            log("Promoted from waitlist: " + earliest.getBookingId());
         }
 
         return promoted;
@@ -298,7 +306,7 @@ public class BookingManager {
     // It does not promote anyone from the waitlist
     public int cancelAllBookingsForEventNoPromotion(String eventId) {
         if (eventId == null || eventId.isBlank()) {
-            System.out.println("[BookingManager] cancelAllBookingsForEvent_NoPromotion failed: eventId blank");
+            log("[BookingManager] cancelAllBookingsForEvent_NoPromotion failed: eventId blank");
             return 0;
         }
 
